@@ -197,7 +197,7 @@ def parseErrything():
         ]
     entities.write("|".join(entities_headers) + "\n")
     
-    print "\nPARSING RAW FILES"
+    print("\nPARSING RAW FILES")
     
     with open('forma1.txt', 'rb') as a1:
         """
@@ -236,7 +236,7 @@ def parseErrything():
         26: Won Primary
         """
         
-        print "    forma1 ..."
+        print("    forma1 ...")
         
         a1reader = csvkit.reader(a1, delimiter = delim)
         a1reader.next()
@@ -388,7 +388,7 @@ def parseErrything():
         
         """
         
-        print "    forma1cand ..."
+        print("    forma1cand ...")
         
         a1candreader = csvkit.reader(a1cand, delimiter = delim)
         a1candreader.next()
@@ -550,7 +550,7 @@ def parseErrything():
         
         """
         
-        print "    formb1 ..."
+        print("    formb1 ...")
         
         b1reader = csvkit.reader(b1, delimiter = delim)
         b1reader.next()
@@ -623,7 +623,7 @@ def parseErrything():
         16: Contributor Zipcode
         """
         
-        print "    formb1ab ..."
+        print("    formb1ab ...")
         
         b1abreader = csvkit.reader(b1ab, delimiter = delim)
         b1abreader.next()
@@ -784,7 +784,7 @@ def parseErrything():
         10: Guarantor
         """
         
-        print "    formb1c ..."
+        print("    formb1c ...")
         
         b1creader = csvkit.reader(b1c, delimiter = delim)
         b1creader.next()
@@ -896,7 +896,7 @@ def parseErrything():
         8: In-Kind
         """
         
-        print "    formb1d ..."
+        print("    formb1d ...")
         
         b1dreader = csvkit.reader(b1d, delimiter = delim)
         b1dreader.next()
@@ -1017,7 +1017,7 @@ def parseErrything():
         17: Report ID
         """
         
-        print "    formb2 ..."
+        print("    formb2 ...")
         
         b2reader = csvkit.reader(b2, delimiter = delim)
         b2reader.next()
@@ -1084,7 +1084,7 @@ def parseErrything():
         *** n.b. The column headings in the file include "Report ID", but it doesn't exist in the data ***
         """
         
-        print "    formb2a ..."
+        print("    formb2a ...")
         
         b2areader = csvkit.reader(b2a, delimiter = delim)
         b2areader.next()
@@ -1241,7 +1241,7 @@ def parseErrything():
         *** n.b. The column headings in the file include "Report ID", but it doesn't exist in the data ***
         """
         
-        print "    formb2b ..."
+        print("    formb2b ...")
         
         b2breader = csvkit.reader(b2b, delimiter = delim)
         b2breader.next()
@@ -1477,7 +1477,7 @@ def parseErrything():
         51: Report ID        
         """
         
-        print "    formb4 ..."
+        print("    formb4 ...")
         
         b4reader = csvkit.reader(b4, delimiter = delim)
         b4reader.next()
@@ -1544,7 +1544,7 @@ def parseErrything():
         *** n.b. The column headings in the file include "Report ID", but it doesn't exist in the data ***
         """
         
-        print "    formb4a ..."
+        print("    formb4a ...")
         
         b4areader = csvkit.reader(b4a, delimiter = delim)
         b4areader.next()
@@ -1702,7 +1702,7 @@ def parseErrything():
         *** n.b. The column headings in the file include "Report ID", but it doesn't exist in the data ***
         """
         
-        print "    formb4b1 ..."
+        print("    formb4b1 ...")
         
         b4b1reader = csvkit.reader(b4b1, delimiter = delim)
         b4b1reader.next()
@@ -1935,7 +1935,7 @@ def parseErrything():
         *** n.b. The column headings in the file include "Report ID", but it doesn't exist in the data ***
         """
         
-        print "    formb4b2 ..."
+        print("    formb4b2 ...")
         
         b4b2reader = csvkit.reader(b4b2, delimiter = delim)
         b4b2reader.next()
@@ -2049,7 +2049,7 @@ def parseErrything():
         *** n.b. The column headings in the file include "Report ID", but it doesn't exist in the data ***
         """
         
-        print "    formb4b3 ..."
+        print("    formb4b3 ...")
         
         b4b3reader = csvkit.reader(b4b3, delimiter = delim)
         b4b3reader.next()
@@ -2173,7 +2173,7 @@ def parseErrything():
         15: Contributor Name
         """
         
-        print "    formb5 ..."
+        print("    formb5 ...")
         
         b5reader = csvkit.reader(b5, delimiter = delim)
         b5reader.next()
@@ -2403,7 +2403,7 @@ def parseErrything():
     
     """
     
-    print "    formb6expend ..."
+    print("    formb6expend ...")
     
     with hide('running', 'stdout', 'stderr'):
         stitched_b6exp = local('csvjoin -d "|" -c "Form ID Number,Form B6 ID" --right formb6.txt formb6expend.txt | csvformat -D "|" |  sed -e \'1d\'', capture=True)
@@ -2468,7 +2468,7 @@ def parseErrything():
                     b6_dict["destination_table"] = "expenditure"
                     b6_dict["donation_date"] = b6_transaction_date
                     #rows_with_new_bad_dates.append(b6_dict)
-                    print b6_dict
+                    print(b6_dict)
                 else:
                     b6_year = b6_date_test.split("-")[0]
                     if int(b6_year) >= 1999:
@@ -2532,7 +2532,7 @@ def parseErrything():
         11: PAC Name
         """
         
-        print "    formb7 ..."
+        print("    formb7 ...")
         
         b7reader = csvkit.reader(b7, delimiter = delim)
         b7reader.next()
@@ -2641,7 +2641,7 @@ def parseErrything():
         *** n.b. committee ID/name and contributor ID/name headers are swapped in the raw data , also there is no Report ID, contrary to headers ***
         """
         
-        print "    formb72 ..."
+        print("    formb72 ...")
         
         b72reader = csvkit.reader(b72, delimiter = delim)
         b72reader.next()
@@ -2798,7 +2798,7 @@ def parseErrything():
         
         """
         
-        print "    formb73 ..."
+        print("    formb73 ...")
         
         b73reader = csvkit.reader(b73, delimiter = delim)
         b73reader.next()
@@ -2961,7 +2961,7 @@ def parseErrything():
         9: Contributor Phone
         """
         
-        print "    formb9 ..."
+        print("    formb9 ...")
         
         b9reader = csvkit.reader(b9, delimiter = delim)
         b9reader.next()
@@ -3023,7 +3023,7 @@ def parseErrything():
         5: Type of Individual
         """
         
-        print "    forma1misc ..."
+        print("    forma1misc ...")
         
         a1miscreader = csvkit.reader(a1misc, delimiter=delim)
         a1miscreader.next()
@@ -3121,9 +3121,9 @@ def parseErrything():
             s = "1 record with a bad date"
         else:
             s = str(len(rows_with_new_bad_dates)) + " records with bad dates"
-        print "\n\nFound " + s + ". Go fix in canonical.py:"
+        print("\n\nFound " + s + ". Go fix in canonical.py:")
         for thing in rows_with_new_bad_dates:
-            print thing
+            print(thing)
         #local("killall parser.sh", capture=False)
 
     
@@ -3171,12 +3171,12 @@ def parseErrything():
     - make one more pass to handle the handful of remaining entities that don't have a name
     """
     
-    print "\n\nPREPPING ENTITY FILE"
+    print("\n\nPREPPING ENTITY FILE")
     
     #get list of unique entity IDs
     uniques = list(set(id_master_list))
         
-    print "   pre-duping ..."
+    print("   pre-duping ...")
     
     #dedupe sorted file
     clean_entity = pd.read_csv(THISPATH + "nadc_data/toupload/entity_raw.txt", delimiter="|", dtype={
@@ -3200,14 +3200,14 @@ def parseErrything():
     
     deduped_entities.to_csv(THISPATH + 'nadc_data/toupload/entities_deduped.txt', sep="|")
     
-    print "   sorting ..."
+    print("   sorting ...")
     
     #sort input file by date
     with hide('running', 'stdout', 'stderr'):
         local('csvsort -d "|" -c 14 ' + THISPATH + 'nadc_data/toupload/entities_deduped.txt | csvformat -D "|" | sed -e \'1d\' > ' + THISPATH + 'nadc_data/toupload/entities_sorted_and_deduped.txt', capture=False)
     
     #get most current, complete data
-    print "   grepping pre-duped, sorted file and deduping for recency and completeness ..."
+    print("   grepping pre-duped, sorted file and deduping for recency and completeness ...")
     
     with open(THISPATH + "nadc_data/toupload/entity_almost_final_for_real.txt", "wb") as entity_almost_final:
         for idx, i in enumerate(uniques):
@@ -3302,7 +3302,7 @@ def parseErrything():
                 entity_almost_final.write("|".join(outlist) + "\n")
                 
     #handling stray bastards with no names
-    print "   handling entities with no name ..."
+    print("   handling entities with no name ...")
     
     with open(THISPATH + "nadc_data/toupload/entity_almost_final_for_real.txt", "rb") as readin, open(THISPATH + "nadc_data/toupload/entity.txt", "wb") as readout:
         reader = csvkit.reader(readin, delimiter=delim)
@@ -3338,8 +3338,8 @@ def parseErrything():
     - chop the header row and kill stray quotes
     """
 
-    print "\n\nPREPPING DONATIONS FILE"
-    print "    deduping ..."
+    print("\n\nPREPPING DONATIONS FILE")
+    print("    deduping ...")
     
     clean_donations = pd.read_csv(THISPATH + "nadc_data/toupload/donations_raw.txt", delimiter="|", dtype={
         "db_id": object,
@@ -3387,7 +3387,7 @@ def parseErrything():
             else:
                 don_out.write("|".join(don_record) + "\n")
     
-    print "\n\nDONE."
+    print("\n\nDONE.")
 
     
 @hosts('dataomaha.com')    
