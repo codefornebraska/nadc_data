@@ -983,7 +983,7 @@ def parseErrything():
                             "", #payee committee ID
                             b1d_committee_name, #name of committee doing the expending,
                             "", #raw target
-                            "\N", #target candidate ID
+                            "\n", #target candidate ID
                             "", #target committee ID                       
                         ]
                         expenditures.write("|".join(b1d_exp_list) + "\n")
@@ -1409,7 +1409,7 @@ def parseErrything():
                             "", #payee committee
                             "", #name of committee doing the expending
                             b2b_target_committee_id, #raw target ID
-                            "\N", #target candidate ID
+                            "\n", #target candidate ID
                             "", #target committee ID                           
                         ]
                         expenditures.write("|".join(b2b_exp_list) + "\n")
@@ -1909,7 +1909,7 @@ def parseErrything():
                                 "", #payee committee ID
                                 "", #name of committee doing the expending
                                 b4b1_target_id, #raw target ID
-                                "\N", #target candidate ID
+                                "\n", #target candidate ID
                                 "", #target committee ID
                             ]
                             expenditures.write("|".join(b4b1_exp_list) + "\n")
@@ -2140,7 +2140,7 @@ def parseErrything():
                             "", #payee committee ID
                             b4b3_committee_name,
                             "", #raw target
-                            "\N", #target candidate ID
+                            "\n", #target candidate ID
                             "", #target committee ID
                         ]
                         expenditures.write("|".join(b4b3_exp_list) + "\n")
@@ -2504,7 +2504,7 @@ def parseErrything():
                             "", #payee ID
                             b6_exp_name, #name of person/entity doing the expending
                             b6_committee_id, #raw target -- expenditure is made on its behalf
-                            "\N", #target candidate ID
+                            "\n", #target candidate ID
                             "", #target committee ID                    
                         ]
                         expenditures.write("|".join(b6_exp_list) + "\n")
@@ -2935,7 +2935,7 @@ def parseErrything():
                             "", #payee committee ID
                             b73_contrib_name, # name of committee doing the expending
                             b73_committee_id, #raw target committee ID
-                            "\N", #target candidate ID
+                            "\n", #target candidate ID
                             "", #target committee ID                    
                         ]
                         expenditures.write("|".join(b73_exp_list) + "\n")
