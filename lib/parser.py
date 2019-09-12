@@ -10,12 +10,12 @@ import re
 class parser(object):  
     """
         Kicks out ready-to-upload data files:
-            toupload/entity.txt
-            toupload/candidate.txt
-            toupload/donation.txt
-            toupload/loan.txt
-            toupload/expenditure.txt
-            toupload/misc.txt
+            temp/entity.txt
+            temp/candidate.txt
+            temp/donation.txt
+            temp/loan.txt
+            temp/expenditure.txt
+            temp/misc.txt
     
         Forms we care about:
             A1: Most committees
@@ -825,7 +825,8 @@ class parser(object):
                             b1c_loan_list = "|".join(b1c_loan_list) + "\n"
                             self.loans.write(bytes(b1c_loan_list, 'utf-8'))
                             return True
-        except:
+        except Exception as err:
+            print(err)
             traceback.print_exc()
             return False
 
