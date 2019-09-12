@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{30c08873-f2bd-409c-ad38-b5be1773385e}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>fabfile.py</StartupFile>
+    <StartupFile>_test.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -20,6 +20,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include="commlatefile.txt" />
+    <Content Include="config.json">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="corplatefile.txt" />
     <Content Include="DATE_UPDATED.TXT" />
     <Content Include="forma1.txt" />
@@ -88,9 +91,25 @@
     <Compile Include="canonical\__init__.py" />
     <Compile Include="fabfile.py" />
     <Compile Include="last_updated.py" />
+    <Compile Include="lib\data_layer.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="lib\parser.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="lib\utils.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="lib\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="_test.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="canonical" />
+    <Folder Include="lib\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>
