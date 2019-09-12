@@ -25,7 +25,7 @@ if(newData):
             parsedFormB1 = utility.openFile('\\downloaded-data\\nadc_data\\formb1.txt', parse.parseFormB1)
             if(parsedFormB1):
                 parsedFormB1AB = utility.openFile('\\downloaded-data\\nadc_data\\formb1ab.txt', parse.parseFormB1AB)
-                if(parsedFormB1):
+                if(parsedFormB1AB):
                     parsedFormB1C = utility.openFile('\\downloaded-data\\nadc_data\\formb1c.txt', parse.parseFormB1C)
                     if(parsedFormB1C):
                         parsedFormB1D = utility.openFile('\\downloaded-data\\nadc_data\\formb1d.txt', parse.parseFormB1D)
@@ -39,7 +39,7 @@ if(newData):
                                         parsedFormB4 = utility.openFile('\\downloaded-data\\nadc_data\\formb4.txt', parse.parseFormB4)
                                         if(parsedFormB4):
                                             parsedFormB4A = utility.openFile('\\downloaded-data\\nadc_data\\formb4a.txt', parse.parseFormB4A)
-                                            if(parsedFormB4):
+                                            if(parsedFormB4A):
                                                 parsedFormB4B1 = utility.openFile('\\downloaded-data\\nadc_data\\formb4b1.txt', parse.parseFormB4B1)
                                                 if(parsedFormB4B1):
                                                     parsedFormB4B2 = utility.openFile('\\downloaded-data\\nadc_data\\formb4b2.txt', parse.parseFormB4B2)

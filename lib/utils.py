@@ -104,7 +104,8 @@ class utils(object):
             with open(os.getcwd() + fileToBeOpened, 'r') as openFile:
                 export = parsingMethod(openFile)
             return export
-        except:
+        except Exception as err:
+            print('Open File Error!')
             traceback.print_exc()
             return False
 
@@ -160,8 +161,6 @@ class utils(object):
         )
     
         deduped_entities = clean_entity.drop_duplicates(subset=["nadcid", "name", "address", "city", "state", "zip", "entity_type", "notes", "employer", "occupation", "place_of_business", "dissolved_date"])
-    
-        deduped_entities.to_csv(os.getcwd() + '\temp\entities_deduped.txt', sep="|")
     
         print("   sorting ...")
 

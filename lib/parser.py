@@ -296,7 +296,7 @@ class parser(object):
                             ]
                             a1_ballot_cand_list = "|".join(a1_ballot_cand_list) + "\n"
                             self.candidates.write(bytes(a1_ballot_cand_list, 'utf-8'))
-                            return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -415,7 +415,7 @@ class parser(object):
                     ]
                     a1cand_list = "|".join(a1cand_list) + "\n"
                     self.candidates.write(bytes(a1cand_list, 'utf-8'))
-                    return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -535,7 +535,7 @@ class parser(object):
                     ]
                     b1_entity_list = "|".join(b1_entity_list) + "\n"
                     self.entities.write(bytes(b1_entity_list, 'utf-8'))
-                    return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -706,7 +706,7 @@ class parser(object):
                             self.donations.write(bytes(b1ab_donation_list, 'utf-8'))
                             self.firehose.write(bytes(b1ab_donation_list, 'utf-8'))
                             self.counter += 1
-                            return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -824,9 +824,8 @@ class parser(object):
                             ]
                             b1c_loan_list = "|".join(b1c_loan_list) + "\n"
                             self.loans.write(bytes(b1c_loan_list, 'utf-8'))
-                            return True
-        except Exception as err:
-            print(err)
+            return True
+        except:
             traceback.print_exc()
             return False
 
@@ -852,7 +851,7 @@ class parser(object):
             print("    formb1d ...")
         
             b1dreader = csvkit.reader(data, delimiter = self.delim)
-            b1dreader.next()
+            next(b1dreader)
     
             for row in b1dreader:
                 b1d_committee_id = row[1]
@@ -894,7 +893,8 @@ class parser(object):
                         "",
                         b1d_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b1d_committee_list) + "\n")
+                    b1d_committee_list = "|".join(b1d_committee_list) + "\n"
+                    self.entities.write(bytes(b1d_committee_list, 'utf-8'))
                 
                     # womp expenditures in there
                     b1d_exp_date = row[6]
@@ -939,9 +939,11 @@ class parser(object):
                                 "\n", #target candidate ID
                                 "", #target committee ID                       
                             ]
-                            self.expenditures.write("|".join(b1d_exp_list) + "\n")
-                            return True
+                            b1d_exp_list = "|".join(b1d_exp_list) + "\n"
+                            self.expenditures.write(bytes(b1d_exp_list, 'utf-8'))
+            return True
         except:
+            traceback.print_exc()
             return False
 
     def parseFormB2(self, data):
@@ -1018,7 +1020,7 @@ class parser(object):
                     ]
                     b2_committee_list = "|".join(b2_committee_list) + "\n"
                     self.entities.write(bytes(b2_committee_list, 'utf-8'))
-                    return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -1178,7 +1180,7 @@ class parser(object):
                             self.donations.write(bytes(b2a_donation_list, 'utf-8'))
                             self.firehose.write(bytes(b2a_donation_list, 'utf-8'))
                             self.counter += 1
-                            return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -1381,7 +1383,7 @@ class parser(object):
                             ]
                             b2b_exp_list = "|".join(b2b_exp_list) + "\n"
                             self.expenditures.write(bytes(b2b_exp_list, 'utf-8'))
-                            return True
+            return True
         except: 
             traceback.print_exc()
             return False
@@ -1495,7 +1497,7 @@ class parser(object):
                     ]
                     b4_committee_list = "|".join(b4_committee_list) + "\n"
                     self.entities.write(bytes(b4_committee_list, 'utf-8'))
-                    return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -1655,7 +1657,7 @@ class parser(object):
                             self.donations.write(bytes(b4a_donation_list, 'utf-8'))
                             self.firehose.write(bytes(b4a_donation_list, 'utf-8'))
                             self.counter += 1
-                            return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -1898,7 +1900,7 @@ class parser(object):
                                 ]
                                 b4b1_exp_list = "|".join(b4b1_exp_list) + "\n"
                                 self.expenditures.write(bytes(b4b1_exp_list, 'utf-8'))
-                                return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -2016,7 +2018,7 @@ class parser(object):
                             ]
                             b4b2_donation_list = "|".join(b4b2_donation_list) + "\n"
                             self.firehose.write(bytes(b4b2_donation_list, 'utf-8'))
-                            return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -2139,7 +2141,7 @@ class parser(object):
                             ]
                             b4b3_exp_list = "|".join(b4b3_exp_list) + "\n"
                             self.expenditures.write(bytes(b4b3_exp_list, 'utf-8'))
-                            return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -2363,7 +2365,7 @@ class parser(object):
                                 ]
                                 b5_donation_list = "|".join(b5_donation_list) + "\n"
                                 self.firehose.write(bytes(b5_donation_list, 'utf-8'))
-                                return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -2480,7 +2482,7 @@ class parser(object):
                     ]
                     b7_sspf_committee_list = "|".join(b7_sspf_committee_list) + "\n"
                     self.entities.write(bytes(b7_sspf_committee_list, 'utf-8'))
-                    return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -2638,7 +2640,7 @@ class parser(object):
                             ]
                             b72_donation_list = "|".join(b72_donation_list) + "\n"
                             self.firehose.write(bytes(b72_donation_list, 'utf-8'))
-                            return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -2813,7 +2815,7 @@ class parser(object):
                             ]
                             b73_exp_list = "|".join(b73_exp_list) + "\n"
                             self.expenditures.write(bytes(b73_exp_list, 'utf-8'))
-                            return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -2885,7 +2887,7 @@ class parser(object):
                     ]
                     b9_committee_list = "|".join(b9_committee_list) + "\n"
                     self.entities.write(bytes(b9_committee_list, 'utf-8'))
-                    return True
+            return True
         except:
             traceback.print_exc()
             return False
@@ -2991,7 +2993,7 @@ class parser(object):
                     ]
                     a1misc_list = "|".join(a1misc_list) + "\n"
                     self.misc.write(bytes(a1misc_list, 'utf-8'))
-                    return True
+            return True
         except:
             traceback.print_exc()
             return False
