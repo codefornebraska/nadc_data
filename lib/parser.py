@@ -1,4 +1,5 @@
-import csvkit, os
+import csvkit, os, sys, traceback
+from lib import utils
 import collections
 import pandas as pd
 import datetime
@@ -58,14 +59,13 @@ class parser(object):
     rows_with_new_bad_dates = []
     counter = 0
 
-    THISPATH = os.getcwd()
-    entities = open(THISPATH + "temp\entity_raw.txt", "wb")
-    candidates = open(THISPATH + "temp\candidate.txt", "wb")
-    donations = open(THISPATH + "temp\donations_raw.txt", "wb")
-    loans = open(THISPATH + "temp\loan.txt", "wb")
-    expenditures = open(THISPATH + "temp\expenditure_raw.txt", "wb")
-    misc = open(THISPATH + "temp\misc.txt", "wb")
-    firehose = open(THISPATH + "temp\firehose.txt", "wb")
+    entities = open(os.getcwd() + '\\temp\\entity_raw.txt', 'wb')
+    candidates = open(os.getcwd() + "\\temp\\candidate.txt", "wb")
+    donations = open(os.getcwd() + "\\temp\\donations_raw.txt", "wb")
+    loans = open(os.getcwd() + "\\temp\\loan.txt", "wb")
+    expenditures = open(os.getcwd() + "\\temp\\expenditure_raw.txt", "wb")
+    misc = open(os.getcwd() + "\\temp\\misc.txt", "wb")
+    firehose = open(os.getcwd() + "\\temp\\firehose.txt", "wb")
 
     #write headers to files that get deduped by pandas or whatever
     donations_headers = [
@@ -83,7 +83,8 @@ class parser(object):
         "donor_name",
         "source_table"
         ]
-    donations.write("|".join(donations_headers) + "\n")
+    donations_headers = "|".join(donations_headers) + "\n"
+    donations.write(bytes(donations_headers, 'utf-8'))
     
     entities_headers = [
         "nadcid",
@@ -100,11 +101,12 @@ class parser(object):
         "dissolved_date",
         "date_we_care_about"
         ]
-    entities.write("|".join(entities_headers) + "\n")
+    entities_headers = "|".join(entities_headers) + "\n"
+    entities.write(bytes(entities_headers, 'utf-8'))
 
     def __init__(self,arg):
         if not parser.instance:
-            parser.instance = parser.singleton(arg)
+            parser.instance = parser.__singleton(arg)
         else:
             parser.instance.val = arg
         return None
@@ -112,13 +114,16 @@ class parser(object):
     def __getattr__(self, name):
         return getattr(self.instance, name)
 
-    def onDestroy(self):
-        close(self.entities)
-        close(self.candidates)
-        close(self.donations)
-        close(self.loans)
-        close(self.expenditures)
-        close(self.misc)
+    def getIdMasterList(self):
+        return self.id_master_list
+
+    def destroy(self):
+        self.entities.close()
+        self.candidates.close()
+        self.donations.close()
+        self.loans.close()
+        self.expenditures.close()
+        self.misc.close()
 
 
     def parseForma1(self, data):
@@ -161,7 +166,7 @@ class parser(object):
             print("    forma1 ...")
         
             a1reader = csvkit.reader(data, delimiter = self.delim)
-            a1reader.next()
+            next(a1reader)
         
             for row in a1reader:
                 a1_entity_id = row[0] #NADC ID
@@ -179,7 +184,7 @@ class parser(object):
                     a1_state = row[4] #State
                     a1_zip = row[5] #ZIP
                     #a1_entity_type = row[6].strip().upper() #Committee type
-                    a1_entity_type = canonFlag(a1_entity_id) # canonical flag                
+                    a1_entity_type = utils.utils().canonFlag(a1_entity_id) # canonical flag                
                     a1_entity_dissolved = row[21] #Date dissolved
                     a1_entity_date_of_thing_happening = row[7] #Date used to eval recency on dedupe
                
@@ -206,14 +211,15 @@ class parser(object):
                         a1_entity_dissolved,
                         a1_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(a1_entity_list) + "\n")
+                    a1_entity_list = "|".join(a1_entity_list) + "\n"
+                    self.entities.write(bytes(a1_entity_list, 'utf-8'))
                 
                     #is there a separate segregated political fund?
                     if row[15] and row[15].strip() != "":
                         a1_sspf_id = row[15] #NADC ID
                         if a1_sspf_id not in GARBAGE_COMMITTEES:
                             #Append ID to master list
-                            id_master_list.append(a1_sspf_id)
+                            self.id_master_list.append(a1_sspf_id)
                         
                             #Add to Entity
                             a1_sspf_name = row[16] #Committee name
@@ -222,7 +228,7 @@ class parser(object):
                             a1_sspf_state = row[19] #State
                             a1_sspf_zip = row[20] #ZIP
                             #a1_sspf_type = row[21] #Committee type
-                            a1_sspf_type = canonFlag(a1_sspf_id) # canonical flag
+                            a1_sspf_type = utils.utils().canonFlag(a1_sspf_id) # canonical flag
                             a1_sspf_entity_date_of_thing_happening = row[7] #Date used to eval recency on dedupe
                         
                             a1_sspf_list = [
@@ -239,7 +245,8 @@ class parser(object):
                                 "",
                                 a1_sspf_entity_date_of_thing_happening,
                             ]
-                            self.entities.write("|".join(a1_sspf_list) + "\n")
+                            a1_sspf_list = "|".join(a1_sspf_list) + "\n"
+                            self.entities.write(bytes(a1_sspf_list, 'utf-8'))
                     
                     #is this a ballot question?
                     if row[6].upper().strip() == "B":
@@ -286,9 +293,11 @@ class parser(object):
                                 "",
                                 ""
                             ]
-                            self.candidates.write("|".join(a1_ballot_cand_list) + "\n")
+                            a1_ballot_cand_list = "|".join(a1_ballot_cand_list) + "\n"
+                            self.candidates.write(bytes(a1_ballot_cand_list, 'utf-8'))
                             return True
-        except:
+        except Exception as err:
+            traceback.print_exc()
             return False
 
 
@@ -332,7 +341,7 @@ class parser(object):
                     a1cand_state = ""
                     a1cand_zip = ""
                     #a1cand_entity_type = ""
-                    a1cand_entity_type = canonFlag(a1cand_committee_id) # canonical flag
+                    a1cand_entity_type = utils.utils().canonFlag(a1cand_committee_id) # canonical flag
                     a1cand_entity_dissolved = ""
                     a1cand_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
                
@@ -495,7 +504,7 @@ class parser(object):
                     b1_state = ' '.join((row[4].upper().strip()).split()).replace('"',"") #State
                     b1_zip = row[5].strip() #ZIP
                     #b1_entity_type = row[2].strip().upper() #Committee type
-                    b1_entity_type = canonFlag(b1_entity_id) # canonical flag
+                    b1_entity_type = utils.utils().canonFlag(b1_entity_id) # canonical flag
                     b1_entity_date_of_thing_happening = row[9] #Date used to eval recency on dedupe
                 
                     """
@@ -570,7 +579,7 @@ class parser(object):
                         b1ab_committee_city = "" #City
                         b1ab_committee_state = "" #State
                         b1ab_committee_zip = "" #ZIP
-                        b1ab_committee_type = canonFlag(b1ab_committee_id) # canonical flag
+                        b1ab_committee_type = utils.utils().canonFlag(b1ab_committee_id) # canonical flag
                         b1ab_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
                 
                         """
@@ -613,7 +622,7 @@ class parser(object):
                         b1ab_contributor_city = row[14].upper().strip() #City
                         b1ab_contributor_state = row[15].upper().strip() #State
                         b1ab_contributor_zip = row[16] #ZIP
-                        b1ab_contributor_type = canonFlag(b1ab_contributor_id) # canonical flag
+                        b1ab_contributor_type = utils.utils().canonFlag(b1ab_contributor_id) # canonical flag
                         b1ab_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
                 
                         """
@@ -654,7 +663,7 @@ class parser(object):
                             b1ab_dict["source_table"] = "b1ab"
                             b1ab_dict["destination_table"] = "donation"
                             b1ab_dict["donation_date"] = b1ab_donation_date
-                            rows_with_new_bad_dates.append(b1ab_dict)
+                            self.rows_with_new_bad_dates.append(b1ab_dict)
                         else:
                             b1ab_year = b1ab_date_test.split("-")[0]
                             if int(b1ab_year) >= 1999:
@@ -669,7 +678,7 @@ class parser(object):
                                 db_id, cash, inkind, pledge, inkind_desc, donation_date, donor_id, recipient_id, donation_year, notes, stance, donor_name, source_table
                                 """
                                 b1ab_donation_list = [                        
-                                    str(counter),
+                                    str(self.counter),
                                     b1ab_cash,
                                     b1ab_inkind_amount,
                                     b1ab_pledge_amount,
@@ -729,7 +738,7 @@ class parser(object):
                     b1c_committee_city = "" #City
                     b1c_committee_state = "" #State
                     b1c_committee_zip = "" #ZIP
-                    b1c_committee_type = canonFlag(b1c_committee_id) # canonical flag
+                    b1c_committee_type = utils.utils().canonFlag(b1c_committee_id) # canonical flag
                     b1c_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -775,7 +784,7 @@ class parser(object):
                         b1c_dict["source_table"] = "b1c"
                         b1c_dict["destination_table"] = "loans"
                         b1c_dict["donation_date"] = b1c_loan_date
-                        rows_with_new_bad_dates.append(b1c_dict)
+                        self.rows_with_new_bad_dates.append(b1c_dict)
                     else:
                         b1c_year = b1c_loan_date_test.split("-")[0]
                         if int(b1c_year) >= 1999:
@@ -843,7 +852,7 @@ class parser(object):
                     b1d_committee_state = "" #State
                     b1d_committee_zip = "" #ZIP
                     #b1d_committee_type = "" #Committee type
-                    b1d_committee_type = canonFlag(b1d_committee_id) # canonical flag
+                    b1d_committee_type = utils.utils().canonFlag(b1d_committee_id) # canonical flag
                     b1d_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -883,7 +892,7 @@ class parser(object):
                         b1d_dict["source_table"] = "b1d"
                         b1d_dict["destination_table"] = "expenditures"
                         b1d_dict["donation_date"] = b1d_exp_date
-                        rows_with_new_bad_dates.append(b1d_dict)
+                        self.rows_with_new_bad_dates.append(b1d_dict)
                     else:
                         b1d_year = b1d_exp_date_test.split("-")[0]
                         if int(b1d_year) >= 1999:
@@ -966,7 +975,7 @@ class parser(object):
                         b2_committee_state = ' '.join((row[3].upper().strip()).split()).replace('"',"") #State
                         b2_committee_zip = row[4] #ZIP
                         #b2_committee_type = "" #Committee type
-                        b2_committee_type = canonFlag(b2_committee_id) # canonical flag
+                        b2_committee_type = utils.utils().canonFlag(b2_committee_id) # canonical flag
                         b2_entity_date_of_thing_happening = row[6] #Date used to eval recency on dedupe
 
                         """
@@ -1037,7 +1046,7 @@ class parser(object):
                     b2a_committee_state = "" #State
                     b2a_committee_zip = "" #ZIP
                     #b2a_committee_type = "" #Committee type
-                    b2a_committee_type = canonFlag(b2a_committee_id) # canonical flag
+                    b2a_committee_type = utils.utils().canonFlag(b2a_committee_id) # canonical flag
                     b2a_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1076,7 +1085,7 @@ class parser(object):
                     b2a_contributor_state = "" #State
                     b2a_contributor_zip = "" #ZIP
                     #b2a_contributor_type = "" #Contributor type
-                    b2a_contributor_type = canonFlag(b2a_contributor_id) # canonical flag
+                    b2a_contributor_type = utils.utils().canonFlag(b2a_contributor_id) # canonical flag
                     b2a_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1117,7 +1126,7 @@ class parser(object):
                         b2a_dict["source_table"] = "b2a"
                         b2a_dict["destination_table"] = "donation"
                         b2a_dict["donation_date"] = b2a_donation_date
-                        rows_with_new_bad_dates.append(b2a_dict)
+                        self.rows_with_new_bad_dates.append(b2a_dict)
                     else:
                         b2a_year = b2a_date_test.split("-")[0]
                         if int(b2a_year) >= 1999:
@@ -1132,7 +1141,7 @@ class parser(object):
                             db_id, cash, inkind, pledge, inkind_desc, donation_date, donor_id, recipient_id, donation_year, notes, stance, donor_name, source_table
                             """
                             b2a_donation_list = [                        
-                                str(counter),
+                                str(self.counter),
                                 b2a_cash,
                                 b2a_inkind_amount,
                                 b2a_pledge_amount,
@@ -1196,7 +1205,7 @@ class parser(object):
                     b2b_committee_city = "" #City
                     b2b_committee_state = "" #State
                     b2b_committee_zip = "" #ZIP
-                    b2b_committee_type = canonFlag(b2b_committee_id) # canonical flag
+                    b2b_committee_type = utils.utils().canonFlag(b2b_committee_id) # canonical flag
                     b2b_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1234,7 +1243,7 @@ class parser(object):
                     b2b_target_city = "" #City
                     b2b_target_state = "" #State
                     b2b_target_zip = "" #ZIP
-                    b2b_target_type = canonFlag(b2b_target_id) # canonical flag
+                    b2b_target_type = utils.utils().canonFlag(b2b_target_id) # canonical flag
                     b2b_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1274,7 +1283,7 @@ class parser(object):
                         b2b_dict["source_table"] = "b2b"
                         b2b_dict["destination_table"] = "expenditures"
                         b2b_dict["donation_date"] = b2b_exp_date
-                        rows_with_new_bad_dates.append(b2b_dict)
+                        self.rows_with_new_bad_dates.append(b2b_dict)
                     else:
                         b2b_year = b2b_exp_date_test.split("-")[0]
                         if int(b2b_year) >= 1999:
@@ -1432,7 +1441,7 @@ class parser(object):
                     b4_committee_state = ' '.join((row[4].strip().upper()).split()).replace('"',"") #State
                     b4_committee_zip = row[5] #ZIP
                     #b4_committee_type = row[2].upper().strip() #Committee type (C=Candidate Committee, B=Ballot Question, P=Political Action Committee, T=Political Party Committee, I or R = Independent Reporting Committee, S=Separate Segregated Political Fund Committee)
-                    b4_committee_type = canonFlag(b4_committee_id) # canonical flag
+                    b4_committee_type = utils.utils().canonFlag(b4_committee_id) # canonical flag
                     b4_entity_date_of_thing_happening = row[7] #Date used to eval recency on dedupe
 
                     """
@@ -1504,7 +1513,7 @@ class parser(object):
                     b4a_committee_state = "" #State
                     b4a_committee_zip = "" #ZIP
                     #b4a_committee_type = "" # Committee type
-                    b4a_committee_type = canonFlag(b4a_committee_id) # canonical flag
+                    b4a_committee_type = utils.utils().canonFlag(b4a_committee_id) # canonical flag
                     b4a_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1543,7 +1552,7 @@ class parser(object):
                     b4a_contributor_state = "" #State
                     b4a_contributor_zip = "" #ZIP
                     #b4a_contributor_type = "" #Contributor type
-                    b4a_contributor_type = canonFlag(b4a_contributor_id) # canonical flag
+                    b4a_contributor_type = utils.utils().canonFlag(b4a_contributor_id) # canonical flag
                     b4a_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1584,7 +1593,7 @@ class parser(object):
                         b4a_dict["source_table"] = "b4a"
                         b4a_dict["destination_table"] = "donation"
                         b4a_dict["donation_date"] = b4a_donation_date
-                        rows_with_new_bad_dates.append(b4a_dict)
+                        self.rows_with_new_bad_dates.append(b4a_dict)
                     else:
                         b4a_year = b4a_date_test.split("-")[0]
                         if int(b4a_year) >= 1999:
@@ -1599,7 +1608,7 @@ class parser(object):
                             db_id, cash, inkind, pledge, inkind_desc, donation_date, donor_id, recipient_id, donation_year, notes, stance, donor_name, source_table
                             """
                             b4a_donation_list = [                        
-                                str(counter),
+                                str(self.counter),
                                 b4a_cash,
                                 b4a_inkind_amount,
                                 b4a_pledge_amount,
@@ -1663,7 +1672,7 @@ class parser(object):
                     b4b1_committee_city = "" #City
                     b4b1_committee_state = "" #State
                     b4b1_committee_zip = "" #ZIP
-                    b4b1_committee_type = canonFlag(b4b1_committee_id) # canonical flag
+                    b4b1_committee_type = utils.utils().canonFlag(b4b1_committee_id) # canonical flag
                     b4b1_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -1701,7 +1710,7 @@ class parser(object):
                     b4b1_target_city = "" #City
                     b4b1_target_state = "" #State
                     b4b1_target_zip = "" #ZIP
-                    b4b1_target_type = canonFlag(b4b1_target_id) # canonical flag
+                    b4b1_target_type = utils.utils().canonFlag(b4b1_target_id) # canonical flag
                     b4b1_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -1741,7 +1750,7 @@ class parser(object):
                         b4b1_dict["source_table"] = "b4b1"
                         b4b1_dict["destination_table"] = "expenditure_or_loan"
                         b4b1_dict["donation_date"] = b4b1_transaction_date
-                        rows_with_new_bad_dates.append(b4b1_dict)
+                        self.rows_with_new_bad_dates.append(b4b1_dict)
                     else:
                         b4b1_year = b4b1_date_test.split("-")[0]
                         if int(b4b1_year) >= 1999:
@@ -1896,7 +1905,7 @@ class parser(object):
                     b4b2_committee_state = "" #State
                     b4b2_committee_zip = "" #ZIP
                     #b4b2_committee_type = "" #Committee type
-                    b4b2_committee_type = canonFlag(b4b2_committee_id) # canonical flag
+                    b4b2_committee_type = utils.utils().canonFlag(b4b2_committee_id) # canonical flag
                     b4b2_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -1936,7 +1945,7 @@ class parser(object):
                         b4b2_dict["source_table"] = "b4b2"
                         b4b2_dict["destination_table"] = "donation"
                         b4b2_dict["donation_date"] = b4b2_transaction_date
-                        rows_with_new_bad_dates.append(b4b2_dict)
+                        self.rows_with_new_bad_dates.append(b4b2_dict)
                     else:
                         b4b2_year = b4b2_date_test.split("-")[0]
                         if int(b4b2_year) >= 1999:
@@ -2013,7 +2022,7 @@ class parser(object):
                     b4b3_committee_state = "" #State
                     b4b3_committee_zip = "" #ZIP
                     #b4b3_committee_type = "" #Committee type
-                    b4b3_committee_type = canonFlag(b4b3_committee_id) # canonical flag
+                    b4b3_committee_type = utils.utils().canonFlag(b4b3_committee_id) # canonical flag
                     b4b2_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -2052,7 +2061,7 @@ class parser(object):
                         b4b3_dict["source_table"] = "b4b3"
                         b4b3_dict["destination_table"] = "expenditure"
                         b4b3_dict["donation_date"] = b4b3_transaction_date
-                        rows_with_new_bad_dates.append(b4b3_dict)
+                        self.rows_with_new_bad_dates.append(b4b3_dict)
                     else:
                         b4b3_year = b4b3_date_test.split("-")[0]
                         if int(b4b3_year) >= 1999:
@@ -2141,7 +2150,7 @@ class parser(object):
                     b5_committee_state = "" #State
                     b5_committee_zip = "" #ZIP
                     #b5_committee_type = "" #Committee type
-                    b5_committee_type = canonFlag(b5_committee_id) # canonical flag
+                    b5_committee_type = utils.utils().canonFlag(b5_committee_id) # canonical flag
                     b5_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -2180,7 +2189,7 @@ class parser(object):
                     b5_contributor_state = "" #State
                     b5_contributor_zip = "" #ZIP
                     #b5_contributor_type = row[8].strip().upper() #Contributor type (B=Business, I=Individual, C=Corporation, M=Candidate committee, P=PAC, Q=Ballot Question Committee, R=Political Party Committee)
-                    b5_contributor_type = canonFlag(b5_contributor_id) # canonical flag
+                    b5_contributor_type = utils.utils().canonFlag(b5_contributor_id) # canonical flag
                     b5_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
                     b5_contributor_occupation = row[12].strip()
                     b5_contributor_employer = row[13].strip()
@@ -2223,7 +2232,7 @@ class parser(object):
                         b5_dict["source_table"] = "b5"
                         b5_dict["destination_table"] = "donation_or_loan"
                         b5_dict["donation_date"] = b5_donation_date
-                        rows_with_new_bad_dates.append(b5_dict)
+                        self.rows_with_new_bad_dates.append(b5_dict)
                     else:
                         b5_year = b5_date_test.split("-")[0]
                         if int(b5_year) >= 1999:
@@ -2355,7 +2364,7 @@ class parser(object):
                     b7_committee_state = "" #State
                     b7_committee_zip = "" #ZIP
                     #b7_committee_type = row[7].upper().strip() #Committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b7_committee_type = canonFlag(b7_committee_id) # canonical flag
+                    b7_committee_type = utils.utils().canonFlag(b7_committee_id) # canonical flag
                     b7_entity_date_of_thing_happening = row[4] #Date used to eval recency on dedupe
 
                     """
@@ -2395,7 +2404,7 @@ class parser(object):
                     b7_sspf_committee_zip = "" #ZIP
                     b7_sspf_committee_descrip = ' '.join((row[9].strip().upper()).split()).replace('"',"")  #description
                     #b7_sspf_committee_type = row[7].upper().strip() #Committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b7_sspf_committee_type = canonFlag(b7_sspf_committee_id) # canonical flag
+                    b7_sspf_committee_type = utils.utils().canonFlag(b7_sspf_committee_id) # canonical flag
                     b7_sspf_entity_date_of_thing_happening = row[4] #Date used to eval recency on dedupe
 
                     """
@@ -2467,7 +2476,7 @@ class parser(object):
                     b72_committee_state = "" #State
                     b72_committee_zip = "" #ZIP
                     #b72_committee_type = "" #Committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b72_committee_type = canonFlag(b72_committee_id) # canonical flag
+                    b72_committee_type = utils.utils().canonFlag(b72_committee_id) # canonical flag
                     b72_entity_date_of_thing_happening = row[4] #Date used to eval recency on dedupe
                 
                     """
@@ -2506,7 +2515,7 @@ class parser(object):
                     b72_contributor_state = "" #State
                     b72_contributor_zip = "" #ZIP
                     #b72_contributor_type = "" #contributor type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b72_contributor_type = canonFlag(b72_contributor_id) # canonical flag
+                    b72_contributor_type = utils.utils().canonFlag(b72_contributor_id) # canonical flag
                     b72_entity_date_of_thing_happening = row[4] #Date used to eval recency on dedupe
                 
                     """
@@ -2546,7 +2555,7 @@ class parser(object):
                         b72_dict["source_table"] = "b72"
                         b72_dict["destination_table"] = "donation"
                         b72_dict["donation_date"] = b72_donation_date
-                        rows_with_new_bad_dates.append(b72_dict)
+                        self.rows_with_new_bad_dates.append(b72_dict)
                     else:
                         b72_year = b72_date_test.split("-")[0]
                         if int(b72_year) >= 1999:
@@ -2626,7 +2635,7 @@ class parser(object):
                     b73_committee_state = "" #State
                     b73_committee_zip = "" #ZIP
                     #b73_committee_type = "" #Committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b73_committee_type = canonFlag(b73_committee_id) # canonical flag
+                    b73_committee_type = utils.utils().canonFlag(b73_committee_id) # canonical flag
                     b73_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
                 
                     """
@@ -2665,7 +2674,7 @@ class parser(object):
                     b73_contributor_state = "" #State
                     b73_contributor_zip = "" #ZIP
                     #b73_contributor_type = "" #contributor type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b73_contributor_type = canonFlag(b73_contributor_id) # canonical flag
+                    b73_contributor_type = utils.utils().canonFlag(b73_contributor_id) # canonical flag
                     b73_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
                  
                     """
@@ -2705,7 +2714,7 @@ class parser(object):
                         b73_dict["source_table"] = "b73"
                         b73_dict["destination_table"] = "expenditures_or_donations"
                         b73_dict["donation_date"] = b73_exp_date
-                        rows_with_new_bad_dates.append(b73_dict)
+                        self.rows_with_new_bad_dates.append(b73_dict)
                     else:
                         b73_year = b73_exp_date_test.split("-")[0]
                         if int(b73_year) >= 1999:
@@ -2790,7 +2799,7 @@ class parser(object):
                     b9_committee_state = "" #State
                     b9_committee_zip = "" #ZIP
                     #b9_committee_type = row[6].upper().strip() #committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Organization, P=Professional Association)
-                    b9_committee_type = canonFlag(b9_committee_id) # canonical flag
+                    b9_committee_type = utils.utils().canonFlag(b9_committee_id) # canonical flag
                     b9_entity_date_of_thing_happening = row[4] #Date used to eval recency on dedupe
                 
                     """
@@ -2856,7 +2865,7 @@ class parser(object):
                     a1misc_committee_state = "" #State
                     a1misc_committee_zip = "" #ZIP
                     #a1misc_committee_type = row[6].upper().strip() #committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Organization, P=Professional Association)
-                    a1misc_committee_type = canonFlag(a1misc_committee_id) # canonical flag
+                    a1misc_committee_type = utils.utils().canonFlag(a1misc_committee_id) # canonical flag
                     a1misc_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
                 
                     """

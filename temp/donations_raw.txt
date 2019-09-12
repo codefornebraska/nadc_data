@@ -1,0 +1,1 @@
+db_id|cash|inkind|pledge|inkind_desc|donation_date|donor_id|recipient_id|donation_year|notes|stance|donor_name|source_table

@@ -19,71 +19,9 @@
     <VisualStudioVersion Condition=" '$(VisualStudioVersion)' == '' ">10.0</VisualStudioVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="commlatefile.txt" />
     <Content Include="config.json">
       <SubType>Code</SubType>
     </Content>
-    <Content Include="corplatefile.txt" />
-    <Content Include="DATE_UPDATED.TXT" />
-    <Content Include="forma1.txt" />
-    <Content Include="forma1cand.txt" />
-    <Content Include="forma1misc.txt" />
-    <Content Include="formb1.txt" />
-    <Content Include="formb10.txt" />
-    <Content Include="formb10exp.txt" />
-    <Content Include="formb11.txt" />
-    <Content Include="formb1ab.txt" />
-    <Content Include="formb1c.txt" />
-    <Content Include="formb1c2.txt" />
-    <Content Include="formb1d.txt" />
-    <Content Include="formb1d2.txt" />
-    <Content Include="formb2.txt" />
-    <Content Include="formb2a.txt" />
-    <Content Include="formb2b.txt" />
-    <Content Include="formb3.txt" />
-    <Content Include="formb4.txt" />
-    <Content Include="formb4a.txt" />
-    <Content Include="formb4b1.txt" />
-    <Content Include="formb4b2.txt" />
-    <Content Include="formb4b3.txt" />
-    <Content Include="formb4c.txt" />
-    <Content Include="formb5.txt" />
-    <Content Include="formb6.txt" />
-    <Content Include="formb6cont.txt" />
-    <Content Include="formb6expend.txt" />
-    <Content Include="formb7.txt" />
-    <Content Include="formb72.txt" />
-    <Content Include="formb73.txt" />
-    <Content Include="formb9.txt" />
-    <Content Include="formb9a.txt" />
-    <Content Include="formb9b.txt" />
-    <Content Include="formc1.txt" />
-    <Content Include="formc1inc.txt" />
-    <Content Include="formc1prop.txt" />
-    <Content Include="formc2.txt" />
-    <Content Include="formcfla1.txt" />
-    <Content Include="formcfla2.txt" />
-    <Content Include="formcfla3.txt" />
-    <Content Include="formcfla4.txt" />
-    <Content Include="formcfla5.txt" />
-    <Content Include="formcfla6.txt" />
-    <Content Include="formcfla7.txt" />
-    <Content Include="formcfla8.txt" />
-    <Content Include="formcfla8a.txt" />
-    <Content Include="formcfla8b.txt" />
-    <Content Include="formcfla8c.txt" />
-    <Content Include="formcfla9.txt" />
-    <Content Include="formcfla9ex.txt" />
-    <Content Include="lforma.txt" />
-    <Content Include="lformar.txt" />
-    <Content Include="lformb.txt" />
-    <Content Include="lformbb.txt" />
-    <Content Include="lformc.txt" />
-    <Content Include="lformcc.txt" />
-    <Content Include="lformd.txt" />
-    <Content Include="lforme.txt" />
-    <Content Include="lformf.txt" />
-    <Content Include="loblatefile.txt" />
     <Content Include="requirements.txt" />
   </ItemGroup>
   <ItemGroup>
@@ -110,6 +48,7 @@
   <ItemGroup>
     <Folder Include="canonical" />
     <Folder Include="lib\" />
+    <Folder Include="temp\" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
 </Project>
