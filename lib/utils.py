@@ -1,4 +1,4 @@
-import csvkit, os
+import csvkit, os, traceback
 
 class utils(object):
     """ Utility class to provide helper functions for parsing """
@@ -6,7 +6,7 @@ class utils(object):
     def __init__(self, *args, **kwargs):
         return super().__init__(*args, **kwargs)
 
-    def validDate(datestring):
+    def validDate(self, datestring):
     # Check for known bad dates, invalid dates, dates in the future
     
         try:
@@ -24,7 +24,7 @@ class utils(object):
                 return "broke"
 
         
-    def getFloat(i):
+    def getFloat(self, i):
         # Return a float or 0.0
     
         if not i or i == "":
@@ -33,7 +33,7 @@ class utils(object):
             return str(float(i))
 
 
-    def lookItUp(input, param, namefield):
+    def lookItUp(self, input, param, namefield):
         # Check if a record exists in canonical donors lookup dict
     
         try:
@@ -56,7 +56,7 @@ class utils(object):
             q.write("import datetime\n\nLAST_UPDATED = datetime.date(" + year + ", " + month + ", " + day + ")")
         q.close()
 
-    def isBadDate(dateToBeChecked):
+    def isBadDate(self, dateToBeChecked):
         if len(dateToBeChecked) > 0:
             if len(dateToBeChecked) == 1:
                 s = "1 record with a bad date"
@@ -66,7 +66,7 @@ class utils(object):
             for date in dateToBeChecked:
                 print(date)
 
-    def handleExpenditures(dataIn, _delimiter):
+    def handleExpenditures(self, dataIn, _delimiter):
         output = None
         reader = csvkit.reader(dataIn, delimiter=_delimiter)
         for row in reader:
@@ -97,6 +97,16 @@ class utils(object):
             else:
                 output = ("|".join(row) + "\n")
                 return output
+
+    def openFile(self,fileToBeOpened, parsingMethod):
+        try:
+            # Export is the boolean value recevied from the parsing method telling us if we failed or not
+            with open(os.getcwd() + fileToBeOpened, 'r') as openFile:
+                export = parsingMethod(openFile)
+            return export
+        except:
+            traceback.print_exc()
+            return False
 
 
 
@@ -349,7 +359,7 @@ class utils(object):
                 else:
                     don_out.write("|".join(don_record) + "\n")
     
-    print("\n\nDONE.")
+        print("\n\nDONE.")
 
 
     def canonFlag(self, input):
@@ -364,7 +374,7 @@ class utils(object):
             return ""
 
 
-    def canonOffice(rawstring, param):
+    def canonOffice(self,rawstring, param):
         """
         Hit the office canonical dict to standardize office names
         """

@@ -58,6 +58,7 @@ class parser(object):
     id_master_list = []
     rows_with_new_bad_dates = []
     counter = 0
+    utility = utils.utils()
 
     entities = open(os.getcwd() + '\\temp\\entity_raw.txt', 'wb')
     candidates = open(os.getcwd() + "\\temp\\candidate.txt", "wb")
@@ -184,7 +185,7 @@ class parser(object):
                     a1_state = row[4] #State
                     a1_zip = row[5] #ZIP
                     #a1_entity_type = row[6].strip().upper() #Committee type
-                    a1_entity_type = utils.utils().canonFlag(a1_entity_id) # canonical flag                
+                    a1_entity_type = self.utility.canonFlag(a1_entity_id) # canonical flag                
                     a1_entity_dissolved = row[21] #Date dissolved
                     a1_entity_date_of_thing_happening = row[7] #Date used to eval recency on dedupe
                
@@ -228,7 +229,7 @@ class parser(object):
                             a1_sspf_state = row[19] #State
                             a1_sspf_zip = row[20] #ZIP
                             #a1_sspf_type = row[21] #Committee type
-                            a1_sspf_type = utils.utils().canonFlag(a1_sspf_id) # canonical flag
+                            a1_sspf_type = self.utility.canonFlag(a1_sspf_id) # canonical flag
                             a1_sspf_entity_date_of_thing_happening = row[7] #Date used to eval recency on dedupe
                         
                             a1_sspf_list = [
@@ -296,7 +297,7 @@ class parser(object):
                             a1_ballot_cand_list = "|".join(a1_ballot_cand_list) + "\n"
                             self.candidates.write(bytes(a1_ballot_cand_list, 'utf-8'))
                             return True
-        except Exception as err:
+        except:
             traceback.print_exc()
             return False
 
@@ -325,7 +326,7 @@ class parser(object):
             print("    forma1cand ...")
         
             a1candreader = csvkit.reader(data, delimiter = self.delim)
-            a1candreader.next()
+            next(a1candreader)
 
             for row in a1candreader:
                 a1cand_id = row[2] #Candidate ID
@@ -341,7 +342,7 @@ class parser(object):
                     a1cand_state = ""
                     a1cand_zip = ""
                     #a1cand_entity_type = ""
-                    a1cand_entity_type = utils.utils().canonFlag(a1cand_committee_id) # canonical flag
+                    a1cand_entity_type = self.utility.canonFlag(a1cand_committee_id) # canonical flag
                     a1cand_entity_dissolved = ""
                     a1cand_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
                
@@ -368,7 +369,8 @@ class parser(object):
                         a1cand_entity_dissolved,
                         a1cand_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(a1cand_entity_list) + "\n")
+                    a1cand_entity_list = "|".join(a1cand_entity_list) + "\n"
+                    self.entities.write(bytes(a1cand_entity_list, 'utf-8'))
             
                 if a1cand_committee_id not in GARBAGE_COMMITTEES and a1cand_id not in GARBAGE_COMMITTEES:
                     #Append to Candidate
@@ -384,9 +386,9 @@ class parser(object):
                 
                     a1cand_office_string = " ".join([a1cand_office_desc, a1cand_office_sought, a1cand_office_title])
                 
-                    a1cand_office = canonOffice(a1cand_office_string, "office")
-                    a1cand_gov = canonOffice(a1cand_office_string, "gov")
-                    a1cand_dist = canonOffice(a1cand_office_string, "district")
+                    a1cand_office = self.utility.canonOffice(a1cand_office_string, "office")
+                    a1cand_gov = self.utility.canonOffice(a1cand_office_string, "gov")
+                    a1cand_dist = self.utility.canonOffice(a1cand_office_string, "district")
                 
                     #Fixing a couple of weird edge cases
                     for item in STANDARD_CANDIDATES:
@@ -411,9 +413,11 @@ class parser(object):
                         "",
                         "",
                     ]
-                    self.candidates.write("|".join(a1cand_list) + "\n")
+                    a1cand_list = "|".join(a1cand_list) + "\n"
+                    self.candidates.write(bytes(a1cand_list, 'utf-8'))
                     return True
         except:
+            traceback.print_exc()
             return False
 
     def parseFormB1(self, data):
@@ -489,7 +493,7 @@ class parser(object):
             print("    formb1 ...")
         
             b1reader = csvkit.reader(data, delimiter = self.delim)
-            b1reader.next()
+            next(b1reader)
         
             for row in b1reader:
                 b1_entity_id = row[6]
@@ -504,7 +508,7 @@ class parser(object):
                     b1_state = ' '.join((row[4].upper().strip()).split()).replace('"',"") #State
                     b1_zip = row[5].strip() #ZIP
                     #b1_entity_type = row[2].strip().upper() #Committee type
-                    b1_entity_type = utils.utils().canonFlag(b1_entity_id) # canonical flag
+                    b1_entity_type = self.utility.canonFlag(b1_entity_id) # canonical flag
                     b1_entity_date_of_thing_happening = row[9] #Date used to eval recency on dedupe
                 
                     """
@@ -529,176 +533,183 @@ class parser(object):
                         "",
                         b1_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b1_entity_list) + "\n")
+                    b1_entity_list = "|".join(b1_entity_list) + "\n"
+                    self.entities.write(bytes(b1_entity_list, 'utf-8'))
                     return True
         except:
+            traceback.print_exc()
             return False
-        def parseFormB1AB(self, data):
-            """
-            FormB1AB: Main donations table
 
-            Data is added to Entity and Donation tables
+
+    def parseFormB1AB(self, data):
+        """
+        FormB1AB: Main donations table
+
+        Data is added to Entity and Donation tables
         
-            COLUMNS
-            =======
-            0: Committee Name
-            1: Committee ID
-            2: Date Received
-            3: Type of Contributor
-            4: Contributor ID
-            5: Contribution Date
-            6: Cash Contribution
-            7: In-Kind Contribution
-            8: Unpaid Pledges
-            9: Contributor Last Name
-            10: Contributor First Name
-            11: Contributor Middle Initial
-            12: Contributor Organization Name
-            13: Contributor Address
-            14: Contributor City
-            15: Contributor State
-            16: Contributor Zipcode
-            """
-            try:
-                print("    formb1ab ...")
+        COLUMNS
+        =======
+        0: Committee Name
+        1: Committee ID
+        2: Date Received
+        3: Type of Contributor
+        4: Contributor ID
+        5: Contribution Date
+        6: Cash Contribution
+        7: In-Kind Contribution
+        8: Unpaid Pledges
+        9: Contributor Last Name
+        10: Contributor First Name
+        11: Contributor Middle Initial
+        12: Contributor Organization Name
+        13: Contributor Address
+        14: Contributor City
+        15: Contributor State
+        16: Contributor Zipcode
+        """
+        try:
+            print("    formb1ab ...")
         
-                b1abreader = csvkit.reader(data, delimiter = self.delim)
-                b1abreader.next()
+            b1abreader = csvkit.reader(data, delimiter = self.delim)
+            next(b1abreader)
         
-                for row in b1abreader:
-                    b1ab_committee_id = row[1]
-                    b1ab_contributor_id = row[4]
+            for row in b1abreader:
+                b1ab_committee_id = row[1]
+                b1ab_contributor_id = row[4]
             
-                    if b1ab_committee_id not in GARBAGE_COMMITTEES:
-                        #Append ID to master list
-                        self.id_master_list.append(b1ab_committee_id)
+                if b1ab_committee_id not in GARBAGE_COMMITTEES:
+                    #Append ID to master list
+                    self.id_master_list.append(b1ab_committee_id)
                 
-                        #Add committee to Entity
-                        b1ab_committee_name = ' '.join((row[0].upper().strip()).split()).replace('"',"") #Committee name
-                        b1ab_committee_address = "" #Address
-                        b1ab_committee_city = "" #City
-                        b1ab_committee_state = "" #State
-                        b1ab_committee_zip = "" #ZIP
-                        b1ab_committee_type = utils.utils().canonFlag(b1ab_committee_id) # canonical flag
-                        b1ab_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
+                    #Add committee to Entity
+                    b1ab_committee_name = ' '.join((row[0].upper().strip()).split()).replace('"',"") #Committee name
+                    b1ab_committee_address = "" #Address
+                    b1ab_committee_city = "" #City
+                    b1ab_committee_state = "" #State
+                    b1ab_committee_zip = "" #ZIP
+                    b1ab_committee_type = self.utility.canonFlag(b1ab_committee_id) # canonical flag
+                    b1ab_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
                 
-                        """
-                        DB fields
-                        ===========
-                        nadcid, name, address, city, state, zip, entity_type, notes, employer, occupation, place_of_business, dissolved_date
+                    """
+                    DB fields
+                    ===========
+                    nadcid, name, address, city, state, zip, entity_type, notes, employer, occupation, place_of_business, dissolved_date
                 
-                        We're adding b1ab_entity_date_of_thing_happening so that later we can eval for recency on dedupe.
-                        """
+                    We're adding b1ab_entity_date_of_thing_happening so that later we can eval for recency on dedupe.
+                    """
                 
-                        b1ab_committee_list = [
-                            b1ab_committee_id,
-                            b1ab_committee_name,
-                            b1ab_committee_address,
-                            b1ab_committee_city,
-                            b1ab_committee_state,
-                            b1ab_committee_zip,
-                            b1ab_committee_type,
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            b1ab_entity_date_of_thing_happening,
-                        ]
-                        self.entities.write("|".join(b1ab_committee_list) + "\n")
+                    b1ab_committee_list = [
+                        b1ab_committee_id,
+                        b1ab_committee_name,
+                        b1ab_committee_address,
+                        b1ab_committee_city,
+                        b1ab_committee_state,
+                        b1ab_committee_zip,
+                        b1ab_committee_type,
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        b1ab_entity_date_of_thing_happening,
+                    ]
+                    b1ab_committee_list = "|".join(b1ab_committee_list) + "\n"
+                    self.entities.write(bytes(b1ab_committee_list, 'utf-8'))
 
-                    if b1ab_contributor_id not in GARBAGE_COMMITTEES:
-                        #Append ID to master list
-                        self.id_master_list.append(b1ab_contributor_id)
+                if b1ab_contributor_id not in GARBAGE_COMMITTEES:
+                    #Append ID to master list
+                    self.id_master_list.append(b1ab_contributor_id)
                 
-                        #Add contributor to Entity
-                        b1ab_contributor_last = row[9] #Contributor last name
-                        b1ab_contributor_first = row[10] #Contributor first name
-                        b1ab_contributor_mid = row[11] #Contributor middle name
-                        b1ab_contributor_org_name = row[12] #Contributor org name
-                        b1ab_concat_name = " ".join([b1ab_contributor_first, b1ab_contributor_mid, b1ab_contributor_last, b1ab_contributor_org_name])
-                        b1ab_contributor_name = ' '.join((b1ab_concat_name.upper().strip()).split()).replace('"',"") #Contributor name
-                        b1ab_contributor_address = row[13].upper().strip() #Address
-                        b1ab_contributor_city = row[14].upper().strip() #City
-                        b1ab_contributor_state = row[15].upper().strip() #State
-                        b1ab_contributor_zip = row[16] #ZIP
-                        b1ab_contributor_type = utils.utils().canonFlag(b1ab_contributor_id) # canonical flag
-                        b1ab_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
+                    #Add contributor to Entity
+                    b1ab_contributor_last = row[9] #Contributor last name
+                    b1ab_contributor_first = row[10] #Contributor first name
+                    b1ab_contributor_mid = row[11] #Contributor middle name
+                    b1ab_contributor_org_name = row[12] #Contributor org name
+                    b1ab_concat_name = " ".join([b1ab_contributor_first, b1ab_contributor_mid, b1ab_contributor_last, b1ab_contributor_org_name])
+                    b1ab_contributor_name = ' '.join((b1ab_concat_name.upper().strip()).split()).replace('"',"") #Contributor name
+                    b1ab_contributor_address = row[13].upper().strip() #Address
+                    b1ab_contributor_city = row[14].upper().strip() #City
+                    b1ab_contributor_state = row[15].upper().strip() #State
+                    b1ab_contributor_zip = row[16] #ZIP
+                    b1ab_contributor_type = self.utility.canonFlag(b1ab_contributor_id) # canonical flag
+                    b1ab_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
                 
-                        """
-                       DB fields
-                        =========
-                        nadcid, name, address, city, state, zip, entity_type, notes, employer, occupation, place_of_business, dissolved_date
+                    """
+                    DB fields
+                    =========
+                    nadcid, name, address, city, state, zip, entity_type, notes, employer, occupation, place_of_business, dissolved_date
                 
-                        We're adding b1ab_entity_date_of_thing_happening so that later we can eval for recency on dedupe.
+                    We're adding b1ab_entity_date_of_thing_happening so that later we can eval for recency on dedupe.
                 
-                        """
-                        b1ab_contributor_list = [
-                            b1ab_contributor_id,
-                            b1ab_contributor_name,
-                            b1ab_contributor_address,
-                            b1ab_contributor_city,
-                            b1ab_contributor_state,
-                            b1ab_contributor_zip,
-                            b1ab_contributor_type,
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            b1ab_entity_date_of_thing_happening,
-                        ]
-                        self.entities.write("|".join(b1ab_contributor_list) + "\n")
+                    """
+                    b1ab_contributor_list = [
+                        b1ab_contributor_id,
+                        b1ab_contributor_name,
+                        b1ab_contributor_address,
+                        b1ab_contributor_city,
+                        b1ab_contributor_state,
+                        b1ab_contributor_zip,
+                        b1ab_contributor_type,
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        b1ab_entity_date_of_thing_happening,
+                    ]
+                    b1ab_contributor_list = "|".join(b1ab_contributor_list) + "\n"
+                    self.entities.write(bytes(b1ab_contributor_list, 'utf-8'))
 
-                    #Womp into donations
-                    if b1ab_contributor_id not in GARBAGE_COMMITTEES and b1ab_committee_id not in GARBAGE_COMMITTEES:
-                        #datetest
-                        b1ab_donation_date = row[5]
-                        b1ab_date_test = validDate(b1ab_donation_date)
-                        if b1ab_date_test == "broke":
-                            b1ab_dict = {}
-                            b1ab_dict["donor_id"] = row[10]
-                            b1ab_dict["recipient_id"] = row[1]
-                            b1ab_dict["lookup_name"] = ' '.join((row[0].upper().strip()).split()).replace('"',"")
-                            b1ab_dict["source_table"] = "b1ab"
-                            b1ab_dict["destination_table"] = "donation"
-                            b1ab_dict["donation_date"] = b1ab_donation_date
-                            self.rows_with_new_bad_dates.append(b1ab_dict)
-                        else:
-                            b1ab_year = b1ab_date_test.split("-")[0]
-                            if int(b1ab_year) >= 1999:
-                                b1ab_cash = getFloat(str(row[6])) #cash                        
-                                b1ab_inkind_amount = getFloat(str(row[7])) #inkind
-                                b1ab_pledge_amount = getFloat(str(row[8])) #pledge
-                                b1ab_inkind_desc = "" #in-kind description
+                #Womp into donations
+                if b1ab_contributor_id not in GARBAGE_COMMITTEES and b1ab_committee_id not in GARBAGE_COMMITTEES:
+                    #datetest
+                    b1ab_donation_date = row[5]
+                    b1ab_date_test = self.utility.validDate(b1ab_donation_date)
+                    if b1ab_date_test == "broke":
+                        b1ab_dict = {}
+                        b1ab_dict["donor_id"] = row[10]
+                        b1ab_dict["recipient_id"] = row[1]
+                        b1ab_dict["lookup_name"] = ' '.join((row[0].upper().strip()).split()).replace('"',"")
+                        b1ab_dict["source_table"] = "b1ab"
+                        b1ab_dict["destination_table"] = "donation"
+                        b1ab_dict["donation_date"] = b1ab_donation_date
+                        self.rows_with_new_bad_dates.append(b1ab_dict)
+                    else:
+                        b1ab_year = b1ab_date_test.split("-")[0]
+                        if int(b1ab_year) >= 1999:
+                            b1ab_cash = self.utility.validDate(str(row[6])) #cash                        
+                            b1ab_inkind_amount = self.utility.validDate(str(row[7])) #inkind
+                            b1ab_pledge_amount = self.utility.validDate(str(row[8])) #pledge
+                            b1ab_inkind_desc = "" #in-kind description
                         
-                                """
-                                DB fields
-                                =========
-                                db_id, cash, inkind, pledge, inkind_desc, donation_date, donor_id, recipient_id, donation_year, notes, stance, donor_name, source_table
-                                """
-                                b1ab_donation_list = [                        
-                                    str(self.counter),
-                                    b1ab_cash,
-                                    b1ab_inkind_amount,
-                                    b1ab_pledge_amount,
-                                    b1ab_inkind_desc,
-                                    b1ab_date_test,
-                                    b1ab_contributor_id,
-                                    b1ab_committee_id,
-                                    b1ab_year,
-                                    "",
-                                    "",
-                                    "",
-                                    "b1ab",
-                                ]
-                        
-                                self.donations.write("|".join(b1ab_donation_list) + "\n")
-                                self.firehose.write("|".join(b1ab_donation_list) + "\n")
-                                self.counter += 1
-                                return True
-            except:
-                return False
+                            """
+                            DB fields
+                            =========
+                            db_id, cash, inkind, pledge, inkind_desc, donation_date, donor_id, recipient_id, donation_year, notes, stance, donor_name, source_table
+                            """
+                            b1ab_donation_list = [                        
+                                str(self.counter),
+                                b1ab_cash,
+                                b1ab_inkind_amount,
+                                b1ab_pledge_amount,
+                                b1ab_inkind_desc,
+                                b1ab_date_test,
+                                b1ab_contributor_id,
+                                b1ab_committee_id,
+                                b1ab_year,
+                                "",
+                                "",
+                                "",
+                                "b1ab",
+                            ]
+                            b1ab_donation_list = "|".join(b1ab_donation_list) + "\n"
+                            self.donations.write(bytes(b1ab_donation_list, 'utf-8'))
+                            self.firehose.write(bytes(b1ab_donation_list, 'utf-8'))
+                            self.counter += 1
+                            return True
+        except:
+            traceback.print_exc()
+            return False
 
     def parseFormB1C(self, data):
         """
@@ -724,7 +735,7 @@ class parser(object):
             print("    formb1c ...")
         
             b1creader = csvkit.reader(data, delimiter = self.delim)
-            b1creader.next()
+            next(b1creader)
         
             for row in b1creader:
                 b1c_committee_id = row[1]
@@ -738,7 +749,7 @@ class parser(object):
                     b1c_committee_city = "" #City
                     b1c_committee_state = "" #State
                     b1c_committee_zip = "" #ZIP
-                    b1c_committee_type = utils.utils().canonFlag(b1c_committee_id) # canonical flag
+                    b1c_committee_type = self.utility.canonFlag(b1c_committee_id) # canonical flag
                     b1c_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -764,7 +775,8 @@ class parser(object):
                         "",
                         b1c_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b1c_committee_list) + "\n")
+                    b1c_committee_list = "|".join(b1c_committee_list) + "\n"
+                    self.entities.write(bytes(b1c_committee_list, 'utf-8'))
                                 
                     #Womp loans into loan table
                     b1c_lender_name = ' '.join((row[3].strip().upper()).split())
@@ -775,7 +787,7 @@ class parser(object):
                     b1c_loan_forgiven = row[8]
                     b1c_paid_by_third_party = row[9]
                     b1c_guarantor = row[10]
-                    b1c_loan_date_test = validDate(b1c_loan_date)
+                    b1c_loan_date_test = self.utility.validDate(b1c_loan_date)
                     if b1c_loan_date_test == "broke":
                         b1c_dict = {}
                         b1c_dict["donor_id"] = ""
@@ -810,9 +822,11 @@ class parser(object):
                                 "", #stance field
                                 "", #lending committee ID
                             ]
-                            self.loans.write("|".join(b1c_loan_list) + "\n")
+                            b1c_loan_list = "|".join(b1c_loan_list) + "\n"
+                            self.loans.write(bytes(b1c_loan_list, 'utf-8'))
                             return True
         except:
+            traceback.print_exc()
             return False
 
     def parseFormB1D(self, data):
@@ -852,7 +866,7 @@ class parser(object):
                     b1d_committee_state = "" #State
                     b1d_committee_zip = "" #ZIP
                     #b1d_committee_type = "" #Committee type
-                    b1d_committee_type = utils.utils().canonFlag(b1d_committee_id) # canonical flag
+                    b1d_committee_type = self.utility.canonFlag(b1d_committee_id) # canonical flag
                     b1d_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -883,7 +897,7 @@ class parser(object):
                 
                     # womp expenditures in there
                     b1d_exp_date = row[6]
-                    b1d_exp_date_test = validDate(b1d_exp_date)
+                    b1d_exp_date_test = self.utility.validDate(b1d_exp_date)
                     if b1d_exp_date_test == "broke":
                         b1d_dict = {}
                         b1d_dict["donor_id"] = ""
@@ -899,8 +913,8 @@ class parser(object):
                             b1d_payee = ' '.join((row[3].upper().strip()).split()).replace('"',"")
                             b1d_address = ' '.join((row[4].upper().strip()).split()).replace('"',"")
                             b1d_exp_purpose = ' '.join((row[5].strip()).split()).replace('"',"")
-                            b1d_amount = getFloat(row[7])
-                            b1d_inkind = getFloat(row[8])
+                            b1d_amount = self.utility.validDate(row[7])
+                            b1d_inkind = self.utility.validDate(row[8])
                         
                             """
                             DB fields
@@ -929,82 +943,84 @@ class parser(object):
         except:
             return False
 
-        def parseFormB2(self, data):
-            """
-            FormB2: Campaign statements for political party committees
+    def parseFormB2(self, data):
+        """
+        FormB2: Campaign statements for political party committees
 
-            Data is added to Entity
+        Data is added to Entity
         
-            COLUMNS
-            =======
-            0: Committee Name
-            1: Committee Address
-            2: Committee City
-            3: Committee State
-            4: Committee Zip
-            5: Committee ID
-            6: Date Received
-            7: Date Last Revised
-            8: Last Revised By
-            9: Postmark Date
-            10: Microfilm Number
-            11: Election Date
-            12: Type of Filing
-            13: Nature Of Filing
-            14: Report Start Date
-            15: Report End Date
-            16: Financial Activity
-            17: Report ID
-            """
-            try:
-                print("    formb2 ...")
+        COLUMNS
+        =======
+        0: Committee Name
+        1: Committee Address
+        2: Committee City
+        3: Committee State
+        4: Committee Zip
+        5: Committee ID
+        6: Date Received
+        7: Date Last Revised
+        8: Last Revised By
+        9: Postmark Date
+        10: Microfilm Number
+        11: Election Date
+        12: Type of Filing
+        13: Nature Of Filing
+        14: Report Start Date
+        15: Report End Date
+        16: Financial Activity
+        17: Report ID
+        """
+        try:
+            print("    formb2 ...")
         
-                b2reader = csvkit.reader(data, delimiter = self.delim)
-                b2reader.next()
+            b2reader = csvkit.reader(data, delimiter = self.delim)
+            next(b2reader)
         
-                for row in b2reader:
-                    b2_committee_id = row[5]
-                    if b2_committee_id not in GARBAGE_COMMITTEES:
-                        #Append ID to master list
-                        self.id_master_list.append(b2_committee_id)
+            for row in b2reader:
+                b2_committee_id = row[5]
+                if b2_committee_id not in GARBAGE_COMMITTEES:
+                    #Append ID to master list
+                    self.id_master_list.append(b2_committee_id)
                 
-                        #Add committee to Entity
-                        b2_committee_name = ' '.join((row[0].upper().strip()).split()).replace('"',"") #Committee name
-                        b2_committee_address = ' '.join((row[1].upper().strip()).split()).replace('"',"") #Address
-                        b2_committee_city = ' '.join((row[2].upper().strip()).split()).replace('"',"") #City
-                        b2_committee_state = ' '.join((row[3].upper().strip()).split()).replace('"',"") #State
-                        b2_committee_zip = row[4] #ZIP
-                        #b2_committee_type = "" #Committee type
-                        b2_committee_type = utils.utils().canonFlag(b2_committee_id) # canonical flag
-                        b2_entity_date_of_thing_happening = row[6] #Date used to eval recency on dedupe
+                    #Add committee to Entity
+                    b2_committee_name = ' '.join((row[0].upper().strip()).split()).replace('"',"") #Committee name
+                    b2_committee_address = ' '.join((row[1].upper().strip()).split()).replace('"',"") #Address
+                    b2_committee_city = ' '.join((row[2].upper().strip()).split()).replace('"',"") #City
+                    b2_committee_state = ' '.join((row[3].upper().strip()).split()).replace('"',"") #State
+                    b2_committee_zip = row[4] #ZIP
+                    #b2_committee_type = "" #Committee type
+                    b2_committee_type = self.utility.canonFlag(b2_committee_id) # canonical flag
+                    b2_entity_date_of_thing_happening = row[6] #Date used to eval recency on dedupe
 
-                        """
-                        DB fields
-                        =========
-                        nadcid, name, address, city, state, zip, entity_type, notes, employer, occupation, place_of_business, dissolved_date
+                    """
+                    DB fields
+                    =========
+                    nadcid, name, address, city, state, zip, entity_type, notes, employer, occupation, place_of_business, dissolved_date
                 
-                        We're adding b2_entity_date_of_thing_happening so that later we can eval for recency on dedupe.
+                    We're adding b2_entity_date_of_thing_happening so that later we can eval for recency on dedupe.
                 
-                        """
-                        b2_committee_list = [
-                            b2_committee_id,
-                            b2_committee_name,
-                            b2_committee_address,
-                            b2_committee_city,
-                            b2_committee_state,
-                            b2_committee_zip,
-                            b2_committee_type,
-                            "",
-                            "",
-                            "",
-                            "",
-                            "",
-                            b2_entity_date_of_thing_happening,
-                        ]
-                        self.entities.write("|".join(b2_committee_list) + "\n")
-                        return True
-            except:
-                return False
+                    """
+                    b2_committee_list = [
+                        b2_committee_id,
+                        b2_committee_name,
+                        b2_committee_address,
+                        b2_committee_city,
+                        b2_committee_state,
+                        b2_committee_zip,
+                        b2_committee_type,
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        b2_entity_date_of_thing_happening,
+                    ]
+                    b2_committee_list = "|".join(b2_committee_list) + "\n"
+                    self.entities.write(bytes(b2_committee_list, 'utf-8'))
+                    return True
+        except:
+            traceback.print_exc()
+            return False
 
     def parseFormB2A(self, data):
         """
@@ -1029,7 +1045,7 @@ class parser(object):
             print("    formb2a ...")
         
             b2areader = csvkit.reader(data, delimiter = self.delim)
-            b2areader.next()
+            next(b2areader)
         
             for row in b2areader:
                 b2a_committee_id = row[0]
@@ -1046,7 +1062,7 @@ class parser(object):
                     b2a_committee_state = "" #State
                     b2a_committee_zip = "" #ZIP
                     #b2a_committee_type = "" #Committee type
-                    b2a_committee_type = utils.utils().canonFlag(b2a_committee_id) # canonical flag
+                    b2a_committee_type = self.utility.canonFlag(b2a_committee_id) # canonical flag
                     b2a_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1072,7 +1088,8 @@ class parser(object):
                         "",
                         b2a_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b2a_committee_list) + "\n")
+                    b2a_committee_list = "|".join(b2a_committee_list) + "\n"
+                    self.entities.write(bytes(b2a_committee_list, 'utf-8'))
                 
                 if b2a_contributor_id not in GARBAGE_COMMITTEES:
                     #Append ID to master list
@@ -1085,7 +1102,7 @@ class parser(object):
                     b2a_contributor_state = "" #State
                     b2a_contributor_zip = "" #ZIP
                     #b2a_contributor_type = "" #Contributor type
-                    b2a_contributor_type = utils.utils().canonFlag(b2a_contributor_id) # canonical flag
+                    b2a_contributor_type = self.utility.canonFlag(b2a_contributor_id) # canonical flag
                     b2a_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1111,13 +1128,14 @@ class parser(object):
                         "",
                         b2a_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b2a_contributor_list) + "\n")
+                    b2a_contributor_list = "|".join(b2a_contributor_list) + "\n"
+                    self.entities.write(bytes(b2a_contributor_list, 'utf-8'))
     
                 #Womp into donations
                 if b2a_contributor_id not in GARBAGE_COMMITTEES and b2a_committee_id not in GARBAGE_COMMITTEES:
                     #datetest
                     b2a_donation_date = row[3]
-                    b2a_date_test = validDate(b2a_donation_date)
+                    b2a_date_test = self.utility.validDate(b2a_donation_date)
                     if b2a_date_test == "broke":
                         b2a_dict = {}
                         b2a_dict["donor_id"] = row[2]
@@ -1130,9 +1148,9 @@ class parser(object):
                     else:
                         b2a_year = b2a_date_test.split("-")[0]
                         if int(b2a_year) >= 1999:
-                            b2a_cash = getFloat(str(row[4])) #cash
-                            b2a_inkind_amount = getFloat(str(row[5])) #inkind
-                            b2a_pledge_amount = getFloat(str(row[6])) #pledge
+                            b2a_cash = self.utility.validDate(str(row[4])) #cash
+                            b2a_inkind_amount = self.utility.validDate(str(row[5])) #inkind
+                            b2a_pledge_amount = self.utility.validDate(str(row[6])) #pledge
                             b2a_inkind_desc = "" #in-kind description
                         
                             """
@@ -1155,11 +1173,13 @@ class parser(object):
                                 "",
                                 "b2a",
                             ]
-                            self.donations.write("|".join(b2a_donation_list) + "\n")
-                            self.firehose.write("|".join(b2a_donation_list) + "\n")
+                            b2a_donation_list = "|".join(b2a_donation_list) + "\n"
+                            self.donations.write(bytes(b2a_donation_list, 'utf-8'))
+                            self.firehose.write(bytes(b2a_donation_list, 'utf-8'))
                             self.counter += 1
                             return True
         except:
+            traceback.print_exc()
             return False
 
     def parseFormB2B(self, data):
@@ -1189,7 +1209,7 @@ class parser(object):
             print("    formb2b ...")
         
             b2breader = csvkit.reader(data, delimiter = self.delim)
-            b2breader.next()
+            next(b2breader)
         
             for row in b2breader:
                 b2b_committee_id = row[0]
@@ -1205,7 +1225,7 @@ class parser(object):
                     b2b_committee_city = "" #City
                     b2b_committee_state = "" #State
                     b2b_committee_zip = "" #ZIP
-                    b2b_committee_type = utils.utils().canonFlag(b2b_committee_id) # canonical flag
+                    b2b_committee_type = self.utility.canonFlag(b2b_committee_id) # canonical flag
                     b2b_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1231,7 +1251,8 @@ class parser(object):
                         "",
                         b2b_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b2b_committee_list) + "\n")
+                    b2b_committee_list = "|".join(b2b_committee_list) + "\n"
+                    self.entities.write(bytes(b2b_committee_list, 'utf-8'))
             
                 if b2b_target_id not in GARBAGE_COMMITTEES:
                     #Append ID to master list
@@ -1243,7 +1264,7 @@ class parser(object):
                     b2b_target_city = "" #City
                     b2b_target_state = "" #State
                     b2b_target_zip = "" #ZIP
-                    b2b_target_type = utils.utils().canonFlag(b2b_target_id) # canonical flag
+                    b2b_target_type = self.utility.canonFlag(b2b_target_id) # canonical flag
                     b2b_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1269,12 +1290,13 @@ class parser(object):
                         "",
                         b2b_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b2b_target_list) + "\n")
+                    b2b_target_list = "|".join(b2b_target_list) + "\n"
+                    self.entities.write(bytes(b2b_target_list, 'utf-8'))
     
                 if b2b_committee_id not in GARBAGE_COMMITTEES and b2b_target_id not in GARBAGE_COMMITTEES:
                     # womp expenditures into Donation or Expenditure
                     b2b_exp_date = row[5]
-                    b2b_exp_date_test = validDate(b2b_exp_date)
+                    b2b_exp_date_test = self.utility.validDate(b2b_exp_date)
                     if b2b_exp_date_test == "broke":
                         b2b_dict = {}
                         b2b_dict["donor_id"] = row[0]
@@ -1297,7 +1319,7 @@ class parser(object):
                         
                             #if direct expenditure, treat as donation
                             if row[4].upper().strip() == "D":
-                                b2b_cash = getFloat(str(row[6])) #cash                        
+                                b2b_cash = self.utility.validDate(str(row[6])) #cash                        
                                 b2b_inkind_amount = "0.0"
                                 b2b_pledge_amount = "0.0"
                                 b2b_inkind_desc = "0.0"
@@ -1322,15 +1344,16 @@ class parser(object):
                                     "",
                                     "b2b",
                                 ]
-                                self.firehose.write("|".join(b2b_donation_list) + "\n")
+                                b2b_donation_list = "|".join(b2b_donation_list) + "\n"
+                                self.firehose.write(bytes(b2b_donation_list, 'utf-8'))
                         
                             #else it's a true expenditure
                             else:
                                 if row[4].upper().strip() == "K":
                                     b2b_amount = "0.0"
-                                    b2b_inkind = getFloat(str(row[6]))
+                                    b2b_inkind = self.utility.getFloat(str(row[6]))
                                 else:
-                                    b2b_amount = getFloat(str(row[6]))
+                                    b2b_amount = self.utility.getFloat(str(row[6]))
                                     b2b_inkind = "0.0"
                         
                             """
@@ -1355,10 +1378,12 @@ class parser(object):
                                 "\n", #target candidate ID
                                 "", #target committee ID                           
                             ]
-                            self.expenditures.write("|".join(b2b_exp_list) + "\n")
+                            b2b_exp_list = "|".join(b2b_exp_list) + "\n"
+                            self.expenditures.write(bytes(b2b_exp_list, 'utf-8'))
                             return True
         except: 
-                return False
+            traceback.print_exc()
+            return False
 
 
     def parseFormB4(self, data):
@@ -1426,7 +1451,7 @@ class parser(object):
             print("    formb4 ...")
         
             b4reader = csvkit.reader(data, delimiter = self.delim)
-            b4reader.next()
+            next(b4reader)
         
             for row in b4reader:
                 b4_committee_id = row[6]
@@ -1441,7 +1466,7 @@ class parser(object):
                     b4_committee_state = ' '.join((row[4].strip().upper()).split()).replace('"',"") #State
                     b4_committee_zip = row[5] #ZIP
                     #b4_committee_type = row[2].upper().strip() #Committee type (C=Candidate Committee, B=Ballot Question, P=Political Action Committee, T=Political Party Committee, I or R = Independent Reporting Committee, S=Separate Segregated Political Fund Committee)
-                    b4_committee_type = utils.utils().canonFlag(b4_committee_id) # canonical flag
+                    b4_committee_type = self.utility.canonFlag(b4_committee_id) # canonical flag
                     b4_entity_date_of_thing_happening = row[7] #Date used to eval recency on dedupe
 
                     """
@@ -1467,10 +1492,12 @@ class parser(object):
                         "",
                         b4_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b4_committee_list) + "\n")
+                    b4_committee_list = "|".join(b4_committee_list) + "\n"
+                    self.entities.write(bytes(b4_committee_list, 'utf-8'))
                     return True
         except:
-          return False
+            traceback.print_exc()
+            return False
 
 
     def parseFormB4A(self, data):
@@ -1496,7 +1523,7 @@ class parser(object):
             print("    formb4a ...")
         
             b4areader = csvkit.reader(data, delimiter = self.delim)
-            b4areader.next()
+            next(b4areader)
         
             for row in b4areader:
                 b4a_committee_id = row[0]
@@ -1513,7 +1540,7 @@ class parser(object):
                     b4a_committee_state = "" #State
                     b4a_committee_zip = "" #ZIP
                     #b4a_committee_type = "" # Committee type
-                    b4a_committee_type = utils.utils().canonFlag(b4a_committee_id) # canonical flag
+                    b4a_committee_type = self.utility.canonFlag(b4a_committee_id) # canonical flag
                     b4a_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1539,7 +1566,8 @@ class parser(object):
                         "",
                         b4a_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b4a_committee_list) + "\n")
+                    b4a_committee_list = "|".join(b4a_committee_list) + "\n"
+                    self.entities.write(bytes(b4a_committee_list, 'utf-8'))
 
                 if b4a_contributor_id not in GARBAGE_COMMITTEES:
                     #Append ID to master list
@@ -1551,8 +1579,7 @@ class parser(object):
                     b4a_contributor_city = "" #City
                     b4a_contributor_state = "" #State
                     b4a_contributor_zip = "" #ZIP
-                    #b4a_contributor_type = "" #Contributor type
-                    b4a_contributor_type = utils.utils().canonFlag(b4a_contributor_id) # canonical flag
+                    b4a_contributor_type = self.utility.canonFlag(b4a_contributor_id) # canonical flag
                     b4a_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
 
                     """
@@ -1578,13 +1605,14 @@ class parser(object):
                         "",
                         b4a_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b4a_contributor_list) + "\n")
+                    b4a_contributor_list = "|".join(b4a_contributor_list) + "\n"
+                    self.entities.write(bytes(b4a_contributor_list, 'utf-8'))
                 
                 #Womp into donations
                 if b4a_contributor_id not in GARBAGE_COMMITTEES and b4a_committee_id not in GARBAGE_COMMITTEES:
                     #datetest
                     b4a_donation_date = row[3]
-                    b4a_date_test = validDate(b4a_donation_date)
+                    b4a_date_test = self.utility.validDate(b4a_donation_date)
                     if b4a_date_test == "broke":
                         b4a_dict = {}
                         b4a_dict["donor_id"] = row[2]
@@ -1597,9 +1625,9 @@ class parser(object):
                     else:
                         b4a_year = b4a_date_test.split("-")[0]
                         if int(b4a_year) >= 1999:
-                            b4a_cash = getFloat(str(row[4])) #cash
-                            b4a_inkind_amount = getFloat(str(row[5])) #inkind
-                            b4a_pledge_amount = getFloat(str(row[6])) #pledge
+                            b4a_cash = self.utility.validDate(str(row[4])) #cash
+                            b4a_inkind_amount = self.utility.getFloat(str(row[5])) #inkind
+                            b4a_pledge_amount = self.utility.validDate(str(row[6])) #pledge
                             b4a_inkind_desc = "" #in-kind description
                         
                             """
@@ -1622,11 +1650,13 @@ class parser(object):
                                 "",
                                 "b4a",
                             ]
-                            self.donations.write("|".join(b4a_donation_list) + "\n")
-                            self.firehose.write("|".join(b4a_donation_list) + "\n")
+                            b4a_donation_list = "|".join(b4a_donation_list) + "\n"
+                            self.donations.write(bytes(b4a_donation_list, 'utf-8'))
+                            self.firehose.write(bytes(b4a_donation_list, 'utf-8'))
                             self.counter += 1
                             return True
         except:
+            traceback.print_exc()
             return False
 
     def parseFormB4B1(self, data):
@@ -1656,7 +1686,7 @@ class parser(object):
             print("    formb4b1 ...")
         
             b4b1reader = csvkit.reader(data, delimiter = self.delim)
-            b4b1reader.next()
+            next(b4b1reader)
         
             for row in b4b1reader:
                 b4b1_committee_id = row[1]
@@ -1672,7 +1702,7 @@ class parser(object):
                     b4b1_committee_city = "" #City
                     b4b1_committee_state = "" #State
                     b4b1_committee_zip = "" #ZIP
-                    b4b1_committee_type = utils.utils().canonFlag(b4b1_committee_id) # canonical flag
+                    b4b1_committee_type = self.utility.canonFlag(b4b1_committee_id) # canonical flag
                     b4b1_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -1698,7 +1728,8 @@ class parser(object):
                         "",
                         b4b1_entity_date_of_thing_happening,
                     ]
-                    entities.write("|".join(b4b1_committee_list) + "\n")
+                    b4b1_committee_list = "|".join(b4b1_committee_list) + "\n"
+                    self.entities.write(bytes(b4b1_committee_list, 'utf-8'))
                 
                 if b4b1_target_id not in GARBAGE_COMMITTEES:
                     #Append ID to master list
@@ -1710,7 +1741,7 @@ class parser(object):
                     b4b1_target_city = "" #City
                     b4b1_target_state = "" #State
                     b4b1_target_zip = "" #ZIP
-                    b4b1_target_type = utils.utils().canonFlag(b4b1_target_id) # canonical flag
+                    b4b1_target_type = self.utility.canonFlag(b4b1_target_id) # canonical flag
                     b4b1_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -1736,12 +1767,13 @@ class parser(object):
                         "",
                         b4b1_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b4b1_target_list) + "\n")
+                    b4b1_target_list = "|".join(b4b1_target_list) + "\n"
+                    self.entities.write(bytes(b4b1_target_list, 'utf-8'))
 
                 if b4b1_target_id not in GARBAGE_COMMITTEES and b4b1_committee_id not in GARBAGE_COMMITTEES:
                     #datetest
                     b4b1_transaction_date = row[6]
-                    b4b1_date_test = validDate(b4b1_transaction_date)
+                    b4b1_date_test = self.utility.validDate(b4b1_transaction_date)
                     if b4b1_date_test == "broke":
                         b4b1_dict = {}
                         b4b1_dict["donor_id"] = row[1]
@@ -1780,22 +1812,23 @@ class parser(object):
                                     b4b1_lender_name, #lender name
                                     b4b1_lender_addr, #lender address
                                     b4b1_date_test, #loan date
-                                    str(getFloat(b4b1_loan_amount)), #loan amount
-                                    str(getFloat(b4b1_loan_repaid)), #amount repaid
-                                    str(getFloat(b4b1_loan_forgiven)), #amount forgiven
-                                    str(getFloat(b4b1_paid_by_third_party)), #amount covered by 3rd party
+                                    str(self.utility.validDate(b4b1_loan_amount)), #loan amount
+                                    str(self.utility.validDate(b4b1_loan_repaid)), #amount repaid
+                                    str(self.utility.validDate(b4b1_loan_forgiven)), #amount forgiven
+                                    str(self.utility.validDate(b4b1_paid_by_third_party)), #amount covered by 3rd party
                                     b4b1_guarantor, #guarantor
                                     b4b1_committee_id, #committee ID
                                     "", #notes field
                                     b4b1_loan_stance, #stance field
                                     b4b1_lending_committee_id, #lending committee ID
                                 ]
-                                self.loans.write("|".join(b4b1_loan_list) + "\n")
+                                b4b1_loan_list = "|".join(b4b1_loan_list) + "\n"
+                                self.loans.write(bytes(b4b1_loan_list, 'utf-8'))
                         
                         
                             # Is it a direct expenditure, i.e. a donation?
                             elif b4b1_transaction_type == "D":
-                                b4b1_cash = getFloat(str(row[7])) #cash                        
+                                b4b1_cash = self.utility.validDate(str(row[7])) #cash                        
                                 b4b1_inkind_amount = "0.0"
                                 b4b1_pledge_amount = "0.0"
                                 b4b1_inkind_desc = ""
@@ -1821,7 +1854,8 @@ class parser(object):
                                     "",
                                     "b4b1",
                                 ]
-                                self.firehose.write("|".join(b4b1_donation_list) + "\n")
+                                b4b1_donation_list = "|".join(b4b1_donation_list) + "\n"
+                                self.firehose.write(bytes(b4b1_donation_list, 'utf-8'))
                         
                             #Or is it a true expenditure?
                             else:
@@ -1833,11 +1867,11 @@ class parser(object):
                             
                                 #was it an in-kind expenditure?
                                 if b4b1_transaction_type.strip().upper() == "I":
-                                    b4b1_exp_inkind = getFloat(row[7])
+                                    b4b1_exp_inkind = self.utility.validDate(row[7])
                                     b4b1_exp_amount = "0.0"
                                 else:
                                     b4b1_exp_inkind = "0.0"
-                                    b4b1_exp_amount = getFloat(row[7])
+                                    b4b1_exp_amount = self.utility.validDate(row[7])
                             
                                 """
                                 DB fields
@@ -1861,9 +1895,11 @@ class parser(object):
                                     "\n", #target candidate ID
                                     "", #target committee ID
                                 ]
-                                self.expenditures.write("|".join(b4b1_exp_list) + "\n")
+                                b4b1_exp_list = "|".join(b4b1_exp_list) + "\n"
+                                self.expenditures.write(bytes(b4b1_exp_list, 'utf-8'))
                                 return True
         except:
+            traceback.print_exc()
             return False
 
     def parseFormB4B2(self, data):
@@ -1889,7 +1925,7 @@ class parser(object):
             print("    formb4b2 ...")
         
             b4b2reader = csvkit.reader(data, delimiter = self.delim)
-            b4b2reader.next()
+            next(b4b2reader)
         
             for row in b4b2reader:
                 b4b2_committee_id = row[1]
@@ -1905,7 +1941,7 @@ class parser(object):
                     b4b2_committee_state = "" #State
                     b4b2_committee_zip = "" #ZIP
                     #b4b2_committee_type = "" #Committee type
-                    b4b2_committee_type = utils.utils().canonFlag(b4b2_committee_id) # canonical flag
+                    b4b2_committee_type = self.utility.canonFlag(b4b2_committee_id) # canonical flag
                     b4b2_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -1932,11 +1968,12 @@ class parser(object):
                         "",
                         b4b2_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b4b2_committee_list) + "\n")
+                    b4b2_committee_list = "|".join(b4b2_committee_list) + "\n"
+                    self.entities.write(bytes(b4b2_committee_list, 'utf-8'))
                 
                     #date test
                     b4b2_transaction_date = row[2]
-                    b4b2_date_test = validDate(b4b2_transaction_date)
+                    b4b2_date_test = self.utility.validDate(b4b2_transaction_date)
                     if b4b2_date_test == "broke":
                         b4b2_dict = {}
                         b4b2_dict["donor_id"] = row[1]
@@ -1950,7 +1987,7 @@ class parser(object):
                         b4b2_year = b4b2_date_test.split("-")[0]
                         if int(b4b2_year) >= 1999:
                             #Add to Donation
-                            b4b2_cash = getFloat(str(row[4])) #cash                        
+                            b4b2_cash = self.utility.validDate(str(row[4])) #cash                        
                             b4b2_inkind_amount = "0.0"
                             b4b2_pledge_amount = "0.0"
                             b4b2_inkind_desc = "" #in-kind description
@@ -1976,9 +2013,11 @@ class parser(object):
                                 b4b2_donor_name,
                                 "b4b2",
                             ]
-                            self.firehose.write("|".join(b4b2_donation_list) + "\n")
+                            b4b2_donation_list = "|".join(b4b2_donation_list) + "\n"
+                            self.firehose.write(bytes(b4b2_donation_list, 'utf-8'))
                             return True
         except:
+            traceback.print_exc()
             return False
 
 
@@ -2006,7 +2045,7 @@ class parser(object):
             print("    formb4b3 ...")
         
             b4b3reader = csvkit.reader(data, delimiter = self.delim)
-            b4b3reader.next()
+            next(b4b3reader)
         
             for row in b4b3reader:
                 b4b3_committee_id = row[1]
@@ -2021,8 +2060,7 @@ class parser(object):
                     b4b3_committee_city = "" #City
                     b4b3_committee_state = "" #State
                     b4b3_committee_zip = "" #ZIP
-                    #b4b3_committee_type = "" #Committee type
-                    b4b3_committee_type = utils.utils().canonFlag(b4b3_committee_id) # canonical flag
+                    b4b3_committee_type = self.utility.canonFlag(b4b3_committee_id) # canonical flag
                     b4b2_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -2048,11 +2086,12 @@ class parser(object):
                         "",
                         b4b2_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b4b3_committee_list) + "\n")
+                    b4b3_committee_list = "|".join(b4b3_committee_list) + "\n"
+                    self.entities.write(bytes(b4b3_committee_list, 'utf-8'))
         
                     #date test
                     b4b3_transaction_date = row[6]
-                    b4b3_date_test = validDate(b4b3_transaction_date)
+                    b4b3_date_test = self.utility.validDate(b4b3_transaction_date)
                     if b4b3_date_test == "broke":
                         b4b3_dict = {}
                         b4b3_dict["donor_id"] = row[1]
@@ -2072,7 +2111,7 @@ class parser(object):
                             b4b3_payee = ' '.join((row[3].strip().upper()).split()).replace('"',"")
                             b4b3_address = ' '.join((row[4].strip().upper()).split()).replace('"',"")
                             b4b3_purpose = ' '.join((row[5].strip().upper()).split()).replace('"',"")
-                            b4b3_amount = getFloat(row[7])
+                            b4b3_amount = self.utility.validDate(row[7])
                             b4b3_inkind = "0.0"
                         
                             """
@@ -2097,9 +2136,11 @@ class parser(object):
                                 "\n", #target candidate ID
                                 "", #target committee ID
                             ]
-                            self.expenditures.write("|".join(b4b3_exp_list) + "\n")
+                            b4b3_exp_list = "|".join(b4b3_exp_list) + "\n"
+                            self.expenditures.write(bytes(b4b3_exp_list, 'utf-8'))
                             return True
         except:
+            traceback.print_exc()
             return False
 
     def parseFormB5(self, data):
@@ -2133,7 +2174,7 @@ class parser(object):
             print("    formb5 ...")
         
             b5reader = csvkit.reader(data, delimiter = self.delim)
-            b5reader.next()
+            next(b5reader)
         
             for row in b5reader:
                 b5_committee_id = row[1]
@@ -2150,7 +2191,7 @@ class parser(object):
                     b5_committee_state = "" #State
                     b5_committee_zip = "" #ZIP
                     #b5_committee_type = "" #Committee type
-                    b5_committee_type = utils.utils().canonFlag(b5_committee_id) # canonical flag
+                    b5_committee_type = self.utility.canonFlag(b5_committee_id) # canonical flag
                     b5_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
 
                     """
@@ -2176,7 +2217,8 @@ class parser(object):
                         "",
                         b5_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b5_committee_list) + "\n")
+                    b5_committee_list = "|".join(b5_committee_list) + "\n"
+                    self.entities.write(bytes(b5_committee_list, 'utf-8'))
         
                 if b5_contributor_id not in GARBAGE_COMMITTEES:
                     #Append ID to master list
@@ -2189,7 +2231,7 @@ class parser(object):
                     b5_contributor_state = "" #State
                     b5_contributor_zip = "" #ZIP
                     #b5_contributor_type = row[8].strip().upper() #Contributor type (B=Business, I=Individual, C=Corporation, M=Candidate committee, P=PAC, Q=Ballot Question Committee, R=Political Party Committee)
-                    b5_contributor_type = utils.utils().canonFlag(b5_contributor_id) # canonical flag
+                    b5_contributor_type = self.utility.canonFlag(b5_contributor_id) # canonical flag
                     b5_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
                     b5_contributor_occupation = row[12].strip()
                     b5_contributor_employer = row[13].strip()
@@ -2218,12 +2260,13 @@ class parser(object):
                         "",
                         b5_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b5_contributor_list) + "\n")
+                    b5_contributor_list = "|".join(b5_contributor_list) + "\n"
+                    self.entities.write(bytes(b5_contributor_list, 'utf-8'))
                 
                 if b5_committee_id not in GARBAGE_COMMITTEES and b5_contributor_id not in GARBAGE_COMMITTEES:
                     #datetest
                     b5_donation_date = row[10]
-                    b5_date_test = validDate(b5_donation_date)
+                    b5_date_test = self.utility.validDate(b5_donation_date)
                     if b5_date_test == "broke":
                         b5_dict = {}
                         b5_dict["donor_id"] = row[7]
@@ -2244,7 +2287,7 @@ class parser(object):
                             
                                 b5_lender_name = ' '.join((row[15].strip().upper()).split()).replace('"',"")
                                 b5_lender_addr = ""
-                                b5_loan_amount = getFloat(str(row[11]))
+                                b5_loan_amount = self.utility.validDate(str(row[11]))
                                 b5_loan_repaid = "0.0"
                                 b5_loan_forgiven = "0.0"
                                 b5_paid_by_third_party = ""
@@ -2271,25 +2314,26 @@ class parser(object):
                                     "", #stance field
                                     b5_contributor_id, #lending committee ID
                                 ]
-                                self.loans.write("|".join(b5_loan_list) + "\n")
+                                b5_loan_list = "|".join(b5_loan_list) + "\n"
+                                self.loans.write(bytes(b5_loan_list, 'utf-8'))
                             else:
                                 pass
                                 # womp into donations
                             
                                 if b5_type_of_contrib == "M":                                
-                                    b5_cash = getFloat(str(row[11])) #cash
+                                    b5_cash = self.utility.validDate(str(row[11])) #cash
                                     b5_inkind_amount = "0.0" #inkind
                                     b5_pledge_amount = "0.0" #pledge
                                 elif b5_type_of_contrib == "I":
                                     b5_cash = "0.0" #cash
-                                    b5_inkind_amount = getFloat(str(row[11])) #inkind
+                                    b5_inkind_amount = self.utility.validDate(str(row[11])) #inkind
                                     b5_pledge_amount = "0.0" #pledge
                                 elif b5_type_of_contrib == "P":
                                     b5_cash = "0.0" #cash
                                     b5_inkind_amount = "0.0" #inkind
-                                    b5_pledge_amount = getFloat(str(row[11])) #pledge
+                                    b5_pledge_amount = self.utility.validDate(str(row[11])) #pledge
                                 else:
-                                    b5_cash = getFloat(str(row[11])) #cash
+                                    b5_cash = self.utility.validDate(str(row[11])) #cash
                                     b5_inkind_amount = "0.0" #inkind
                                     b5_pledge_amount = "0.0" #pledge
                             
@@ -2316,9 +2360,11 @@ class parser(object):
                                     b5_donor_name,
                                     "b5",
                                 ]
-                                self.firehose.write("|".join(b5_donation_list) + "\n")
+                                b5_donation_list = "|".join(b5_donation_list) + "\n"
+                                self.firehose.write(bytes(b5_donation_list, 'utf-8'))
                                 return True
         except:
+            traceback.print_exc()
             return False
 
 
@@ -2347,7 +2393,7 @@ class parser(object):
             print("    formb7 ...")
         
             b7reader = csvkit.reader(data, delimiter = self.delim)
-            b7reader.next()
+            next(b7reader)
         
             for row in b7reader:
                 b7_committee_id = row[1]
@@ -2364,7 +2410,7 @@ class parser(object):
                     b7_committee_state = "" #State
                     b7_committee_zip = "" #ZIP
                     #b7_committee_type = row[7].upper().strip() #Committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b7_committee_type = utils.utils().canonFlag(b7_committee_id) # canonical flag
+                    b7_committee_type = self.utility.canonFlag(b7_committee_id) # canonical flag
                     b7_entity_date_of_thing_happening = row[4] #Date used to eval recency on dedupe
 
                     """
@@ -2390,7 +2436,8 @@ class parser(object):
                         "",
                         b7_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b7_committee_list) + "\n")
+                    b7_committee_list = "|".join(b7_committee_list) + "\n"
+                    self.entities.write(bytes(b7_committee_list, 'utf-8'))
             
                 if b7_sspf_committee_id.strip() and b7_sspf_committee_id.strip() != "" and b7_sspf_committee_id.strip() not in GARBAGE_COMMITTEES:
                     #Append ID to master list
@@ -2404,7 +2451,7 @@ class parser(object):
                     b7_sspf_committee_zip = "" #ZIP
                     b7_sspf_committee_descrip = ' '.join((row[9].strip().upper()).split()).replace('"',"")  #description
                     #b7_sspf_committee_type = row[7].upper().strip() #Committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b7_sspf_committee_type = utils.utils().canonFlag(b7_sspf_committee_id) # canonical flag
+                    b7_sspf_committee_type = self.utility.canonFlag(b7_sspf_committee_id) # canonical flag
                     b7_sspf_entity_date_of_thing_happening = row[4] #Date used to eval recency on dedupe
 
                     """
@@ -2430,9 +2477,11 @@ class parser(object):
                         "",
                         b7_sspf_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b7_sspf_committee_list) + "\n")
+                    b7_sspf_committee_list = "|".join(b7_sspf_committee_list) + "\n"
+                    self.entities.write(bytes(b7_sspf_committee_list, 'utf-8'))
                     return True
         except:
+            traceback.print_exc()
             return False
 
 
@@ -2459,7 +2508,7 @@ class parser(object):
             print("    formb72 ...")
         
             b72reader = csvkit.reader(data, delimiter = self.delim)
-            b72reader.next()
+            next(b72reader)
         
             for row in b72reader:
                 b72_committee_id = row[3]
@@ -2476,7 +2525,7 @@ class parser(object):
                     b72_committee_state = "" #State
                     b72_committee_zip = "" #ZIP
                     #b72_committee_type = "" #Committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b72_committee_type = utils.utils().canonFlag(b72_committee_id) # canonical flag
+                    b72_committee_type = self.utility.canonFlag(b72_committee_id) # canonical flag
                     b72_entity_date_of_thing_happening = row[4] #Date used to eval recency on dedupe
                 
                     """
@@ -2502,7 +2551,8 @@ class parser(object):
                         "",
                         b72_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b72_committee_list) + "\n")
+                    b72_committee_list = "|".join(b72_committee_list) + "\n"
+                    self.entities.write(bytes(b72_committee_list, 'utf-8'))
             
                 if b72_contributor_id not in GARBAGE_COMMITTEES:
                     #Append ID to master list
@@ -2515,7 +2565,7 @@ class parser(object):
                     b72_contributor_state = "" #State
                     b72_contributor_zip = "" #ZIP
                     #b72_contributor_type = "" #contributor type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b72_contributor_type = utils.utils().canonFlag(b72_contributor_id) # canonical flag
+                    b72_contributor_type = self.utility.canonFlag(b72_contributor_id) # canonical flag
                     b72_entity_date_of_thing_happening = row[4] #Date used to eval recency on dedupe
                 
                     """
@@ -2540,13 +2590,14 @@ class parser(object):
                         "",
                         b72_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b72_contributor_list) + "\n")
+                    b72_contributor_list = "|".join(b72_contributor_list) + "\n"
+                    self.entities.write(bytes(b72_contributor_list, 'utf-8'))
 
                 #womp into Donation                
                 if b72_committee_id not in GARBAGE_COMMITTEES and b72_contributor_id not in GARBAGE_COMMITTEES:
                     #datetest
                     b72_donation_date = row[2] #this is actually date received, not donation date, let's see what breaks
-                    b72_date_test = validDate(b72_donation_date)
+                    b72_date_test = self.utility.validDate(b72_donation_date)
                     if b72_date_test == "broke":
                         b72_dict = {}
                         b72_dict["donor_id"] = row[1]
@@ -2559,7 +2610,7 @@ class parser(object):
                     else:
                         b72_year = b72_date_test.split("-")[0]
                         if int(b72_year) >= 1999:
-                            b72_cash = getFloat(str(row[5])) #cash                        
+                            b72_cash = self.utility.validDate(str(row[5])) #cash                        
                             b72_inkind_amount = "0.0" #inkind
                             b72_pledge_amount = "0.0" #pledge
                             b72_inkind_desc = "" #in-kind description
@@ -2584,9 +2635,11 @@ class parser(object):
                                 " ".join((row[0].strip().upper()).split()).replace('"',""),
                                 "b72",
                             ]
-                            self.firehose.write("|".join(b72_donation_list) + "\n")
+                            b72_donation_list = "|".join(b72_donation_list) + "\n"
+                            self.firehose.write(bytes(b72_donation_list, 'utf-8'))
                             return True
         except:
+            traceback.print_exc()
             return False
 
     def parseFormB73(self, data):
@@ -2618,7 +2671,7 @@ class parser(object):
             print("    formb73 ...")
         
             b73reader = csvkit.reader(data, delimiter = self.delim)
-            b73reader.next()
+            next(b73reader)
         
             for row in b73reader:
                 b73_committee_id = row[3]
@@ -2635,7 +2688,7 @@ class parser(object):
                     b73_committee_state = "" #State
                     b73_committee_zip = "" #ZIP
                     #b73_committee_type = "" #Committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b73_committee_type = utils.utils().canonFlag(b73_committee_id) # canonical flag
+                    b73_committee_type = self.utility.canonFlag(b73_committee_id) # canonical flag
                     b73_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
                 
                     """
@@ -2661,7 +2714,8 @@ class parser(object):
                         "",
                         b73_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b73_committee_list) + "\n")
+                    b73_committee_list = "|".join(b73_committee_list) + "\n"
+                    self.entities.write(bytes(b73_committee_list, 'utf-8'))
                 
                 if b73_contributor_id not in GARBAGE_COMMITTEES:
                     #Append ID to master list
@@ -2674,7 +2728,7 @@ class parser(object):
                     b73_contributor_state = "" #State
                     b73_contributor_zip = "" #ZIP
                     #b73_contributor_type = "" #contributor type (C=Corporation, L=Labor Organization, I=Industry or Trade Association, P=Professional Association)
-                    b73_contributor_type = utils.utils().canonFlag(b73_contributor_id) # canonical flag
+                    b73_contributor_type = self.utility.canonFlag(b73_contributor_id) # canonical flag
                     b73_entity_date_of_thing_happening = row[2] #Date used to eval recency on dedupe
                  
                     """
@@ -2700,12 +2754,13 @@ class parser(object):
                         "",
                         b73_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b73_contributor_list) + "\n")
+                    b73_contributor_list = "|".join(b73_contributor_list) + "\n"
+                    self.entities.write(bytes(b73_contributor_list, 'utf-8'))
             
                 if b73_committee_id not in GARBAGE_COMMITTEES and b73_contributor_id not in GARBAGE_COMMITTEES:
                     #date test
                     b73_exp_date = row[4]
-                    b73_exp_date_test = validDate(b73_exp_date)
+                    b73_exp_date_test = self.utility.validDate(b73_exp_date)
                     if b73_exp_date_test == "broke":
                         b73_dict = {}
                         b73_dict["donor_id"] = ""
@@ -2727,11 +2782,11 @@ class parser(object):
                             b73_contrib_name = ' '.join((row[0].strip().upper()).split()).replace('"',"")
 
                             if b73_contrib_type == "E":
-                                b73_amount = getFloat(row[5])
+                                b73_amount = self.utility.validDate(row[5])
                                 b73_inkind = "0.0"
                             else:
                                 b73_amount = "0.0"
-                                b73_inkind = getFloat(row[5])
+                                b73_inkind = self.utility.validDate(row[5])
                         
                             """
                             DB fields
@@ -2755,9 +2810,11 @@ class parser(object):
                                 "\n", #target candidate ID
                                 "", #target committee ID                    
                             ]
-                            self.expenditures.write("|".join(b73_exp_list) + "\n")
+                            b73_exp_list = "|".join(b73_exp_list) + "\n"
+                            self.expenditures.write(bytes(b73_exp_list, 'utf-8'))
                             return True
         except:
+            traceback.print_exc()
             return False
 
 
@@ -2784,7 +2841,7 @@ class parser(object):
             print("    formb9 ...")
         
             b9reader = csvkit.reader(data, delimiter = self.delim)
-            b9reader.next()
+            next(b9reader)
          
             for row in b9reader:
                 b9_committee_id = row[2]
@@ -2799,7 +2856,7 @@ class parser(object):
                     b9_committee_state = "" #State
                     b9_committee_zip = "" #ZIP
                     #b9_committee_type = row[6].upper().strip() #committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Organization, P=Professional Association)
-                    b9_committee_type = utils.utils().canonFlag(b9_committee_id) # canonical flag
+                    b9_committee_type = self.utility.canonFlag(b9_committee_id) # canonical flag
                     b9_entity_date_of_thing_happening = row[4] #Date used to eval recency on dedupe
                 
                     """
@@ -2825,9 +2882,11 @@ class parser(object):
                         "",
                         b9_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(b9_committee_list) + "\n")
+                    b9_committee_list = "|".join(b9_committee_list) + "\n"
+                    self.entities.write(bytes(b9_committee_list, 'utf-8'))
                     return True
         except:
+            traceback.print_exc()
             return False
 
 
@@ -2850,7 +2909,7 @@ class parser(object):
             print("    forma1misc ...")
         
             a1miscreader = csvkit.reader(data, delimiter= self.delim)
-            a1miscreader.next()
+            next(a1miscreader)
          
             for row in a1miscreader:
                 a1misc_committee_id = row[0]
@@ -2865,7 +2924,7 @@ class parser(object):
                     a1misc_committee_state = "" #State
                     a1misc_committee_zip = "" #ZIP
                     #a1misc_committee_type = row[6].upper().strip() #committee type (C=Corporation, L=Labor Organization, I=Industry or Trade Organization, P=Professional Association)
-                    a1misc_committee_type = utils.utils().canonFlag(a1misc_committee_id) # canonical flag
+                    a1misc_committee_type = self.utility.canonFlag(a1misc_committee_id) # canonical flag
                     a1misc_entity_date_of_thing_happening = row[1] #Date used to eval recency on dedupe
                 
                     """
@@ -2891,7 +2950,8 @@ class parser(object):
                         "",
                         a1misc_entity_date_of_thing_happening,
                     ]
-                    self.entities.write("|".join(a1misc_committee_list) + "\n")
+                    a1misc_committee_list = "|".join(a1misc_committee_list) + "\n"
+                    self.entities.write(bytes(a1misc_committee_list, 'utf-8'))
             
                     #womp into misc table
                     misc_lookup = {
@@ -2928,8 +2988,9 @@ class parser(object):
                         "",
                         a1misc_committee_id
                     ]
-                
-                    self.misc.write("|".join(a1misc_list) + "\n")
+                    a1misc_list = "|".join(a1misc_list) + "\n"
+                    self.misc.write(bytes(a1misc_list, 'utf-8'))
                     return True
         except:
+            traceback.print_exc()
             return False

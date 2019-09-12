@@ -2475,7 +2475,7 @@ def parseErrything():
                         b6_payee = ' '.join((row[27].strip().upper()).split()).replace('"',"")
                         b6_payee_addr = ' '.join((row[28].strip().upper()).split()).replace('"',"")
                         b6_purpose = ' '.join((row[26].strip().upper()).split()).replace('"',"")
-                        b6_amount = getFloat(row[25lpk])
+                        b6_amount = getFloat(row[25])
                         b6_inkind = "0.0"
                         b6_target_id = row[2]
                         b6_stance = ""
