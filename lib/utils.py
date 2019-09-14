@@ -1,4 +1,5 @@
 import csvkit, os, traceback
+import pandas as pd
 
 class utils(object):
     """ Utility class to provide helper functions for parsing """
@@ -56,47 +57,54 @@ class utils(object):
             q.write("import datetime\n\nLAST_UPDATED = datetime.date(" + year + ", " + month + ", " + day + ")")
         q.close()
 
-    def isBadDate(self, dateToBeChecked):
+    def hasBadDates(self, dateToBeChecked):
         if len(dateToBeChecked) > 0:
             if len(dateToBeChecked) == 1:
                 s = "1 record with a bad date"
             else:
                 s = str(len(dateToBeChecked)) + " records with bad dates"
             print("\n\nFound " + s + ". Go fix in canonical.py:")
-            for date in dateToBeChecked:
-                print(date)
 
-    def handleExpenditures(self, dataIn, _delimiter):
-        output = None
-        reader = csvkit.reader(dataIn, delimiter=_delimiter)
-        for row in reader:
-            db_id = row[0]
-            payee = row[1]
-            payee_addr = row[2]
-            exp_date = row[3]
-            exp_purpose = row[4]
-            amount = row[5]
-            inkind = row[6]
-            committee_id = row[7]
-            stance = row[8]
-            notes = row[9]
-            payee_committee_id = row[10]
-            committee_exp_name = row[11]
-            raw_target = row[12]
-            target_candidate_id = row[13]
-            target_committee_id = row[14]
+
+    def handleExpenditures(self, dataIn, _delimiter):  
+        try:
+            output = None
+            reader = csvkit.reader(dataIn, delimiter=_delimiter)
+            print(dataIn)
+            for row in reader:
+                db_id = row[0]
+                payee = row[1]
+                payee_addr = row[2]
+                exp_date = row[3]
+                exp_purpose = row[4]
+                amount = row[5]
+                inkind = row[6]
+                committee_id = row[7]
+                stance = row[8]
+                notes = row[9]
+                payee_committee_id = row[10]
+                committee_exp_name = row[11]
+                raw_target = row[12]
+                target_candidate_id = row[13]
+                target_committee_id = row[14]
             
-            if int(float(amount)) > 0 and int(float(inkind)) > 0:
-                ls1 = [db_id, payee, payee_addr, exp_date, exp_purpose, amount, "0.0", committee_id, stance, notes, payee_committee_id, committee_exp_name, raw_target, target_candidate_id, target_committee_id]
+                if int(float(amount)) > 0 and int(float(inkind)) > 0:
+                    ls1 = [db_id, payee, payee_addr, exp_date, exp_purpose, amount, "0.0", committee_id, stance, notes, payee_committee_id, committee_exp_name, raw_target, target_candidate_id, target_committee_id]
 
-                ls2 = [db_id, payee, payee_addr, exp_date, exp_purpose, "0.0", inkind, committee_id, stance, notes, payee_committee_id, committee_exp_name, raw_target, target_candidate_id, target_committee_id]
+                    ls2 = [db_id, payee, payee_addr, exp_date, exp_purpose, "0.0", inkind, committee_id, stance, notes, payee_committee_id, committee_exp_name, raw_target, target_candidate_id, target_committee_id]
                 
-                output = ("|".join(ls1) + "\n")
-                output += ("|".join(ls2) + "\n")
-                return output
-            else:
-                output = ("|".join(row) + "\n")
-                return output
+                    output = ("|".join(ls1) + "\n")
+                    output += ("|".join(ls2) + "\n")
+                else:
+                    output = ("|".join(row) + "\n")
+            return output
+        except:
+            output = None
+            showError = input("\n\nExpenditures are either empty, or there was an error. Would you like to see the error? ( Y = yes, N = No) : ")
+            showError = showError.upper()
+            if(showError == "Y"):
+                traceback.print_exc()
+            return output
 
     def openFile(self,fileToBeOpened, parsingMethod):
         try:
@@ -161,7 +169,7 @@ class utils(object):
         )
     
         deduped_entities = clean_entity.drop_duplicates(subset=["nadcid", "name", "address", "city", "state", "zip", "entity_type", "notes", "employer", "occupation", "place_of_business", "dissolved_date"])
-    
+        deduped_entities.to_csv(THISPATH + 'nadc_data/toupload/entities_deduped.txt', sep="|")
         print("   sorting ...")
 
         #sort input file by date

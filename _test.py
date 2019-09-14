@@ -1,7 +1,6 @@
 
 from lib import data_layer, parser, utils
 import json, os
-# parse form b6 somehow
 # finish dedupe functions in utils
 
 config = None
@@ -61,11 +60,18 @@ if(newData):
                                                                                 parsedFormB9 = utility.openFile('\\downloaded-data\\nadc_data\\formb9.txt', parse.parseFormB9)
                                                                                 if(parsedFormB9):
                                                                                     parsedFormMisc = utility.openFile('\\downloaded-data\\nadc_data\\forma1misc.txt', parse.parseFormA1Misc)
-
+                                                                                    if(parsedFormMisc):
+                                                                                        badDates = parse.getRowsWithBadDates()
+                                                                                        delim = parse.getDelimiter()
+                                                                                        utility.hasBadDates(badDates)
+                                                                                        expend = utility.handleExpenditures(os.getcwd() + '\\temp\\expenditure_raw.txt', delim)
+                                                                                        if(expend is not None):
+                                                                                            with open(os.getcwd + "\\temp\\expenditure.txt", "wb") as exp_out:
+                                                                                                exp_out.write(bytes(expend, 'utf-8'))
     parse.destroy()
 
     if(parsedFormA1 and parsedFormA1Cand and parsedFormB1 and parsedFormB1AB and parsedFormB1C and parsedFormB1D and parsedFormB2 and parsedFormB2A and parsedFormB2B and parsedFormB4 and parsedFormB4A and parsedFormB4B1 and parsedFormB4B2 and parsedFormB4B3 and parsedFormB5 and parsedFormB6 and parsedFormB7 and parsedFormB72 and parsedFormB73 and parsedFormB9 and parsedFormMisc):
-        print(".......Completed Successfully.")
+        print("\n\n.......Completed Successfully.")
     else:
-        print(".......Parsing Failed.")
+        print("\n\n.......Parsing Failed.")
 

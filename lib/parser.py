@@ -118,6 +118,12 @@ class parser(object):
     def getIdMasterList(self):
         return self.id_master_list
 
+    def getRowsWithBadDates(self):
+        return self.rows_with_new_bad_dates
+
+    def getDelimiter(self):
+        return self.delim
+
     def destroy(self):
         self.entities.close()
         self.candidates.close()
