@@ -2370,6 +2370,169 @@ class parser(object):
             traceback.print_exc()
             return False
 
+    def parseFormB6(self,form1Data, form2Data):
+        
+        """
+        FormB6 + B6CONT + B6EXPEND: Expenditures on behalf of committees by people or entities who do not have an ID
+ 
+        Data is added to Entity, Expenditure
+    
+        COLUMNS
+        =======
+        0: Committee Name
+        1: Form ID Number
+        2: Committee ID
+        3: Postmark Date
+        4: Date Received
+        5: Microfilm Number
+        6: Expenditure Name
+        7: Expend Phone
+        8: Expend Address
+        9: Expend City
+        10: Expend State
+        11: Expend Zip
+        12: Election Date
+        13: Recipient Name
+        14: Recipient Address
+        15: Expenditure Date
+        16: Amount
+        17: Description
+        18: Date Last Revised
+        19: Last Revised By
+        20: Committee Name
+        21: Form B6 ID
+        22: Date Received
+        23: Form ID
+        24: Expenditure Date
+        25: Amount
+        26: Description
+        27: Recipient Name
+        28: Recipient Address
+    
+        """
+        try:
+            print("    formb6 ...")
+
+            importDataForm1 = pd.read_csv(form1Data, delimiter=self.delim)
+            importDataForm2 = pd.read_csv(form2Data, delimiter=self.delim)
+
+            mainForm = pd.merge(importDataForm1, importDataForm2, how='right', left_on='Form ID Number', right_on='Form B6 ID')
+            mainForm = mainForm.replace(to_replace ='1d', value = '', regex = True)
+
+            mainForm = mainForm.to_csv(path_or_buf=os.getcwd() + '\\tempForm6.txt', sep='|')
+
+            with open(os.getcwd() + '\\tempForm6.txt', 'r') as stitched_b6exp:
+                ls = []
+                stitched_b6exp = [line.rstrip('\n') for line in stitched_b6exp]
+                for dude in stitched_b6exp:
+                    ls.append(dude.split("|"))
+                for row in ls:
+                    b6_committee_id = row[2]
+            
+                    if b6_committee_id not in GARBAGE_COMMITTEES:
+                        #Append ID to master list
+                        self.id_master_list.append(b6_committee_id)
+                        #Add committee to Entity
+                        b6_committee_name = ' '.join((row[0].strip().upper()).split()).replace('"',"") #Committee name
+                        b6_committee_address = "" #Address
+                        b6_committee_city = "" #City
+                        b6_committee_state = "" #State
+                        b6_committee_zip = "" #ZIP
+                        #b6_committee_type = "" #Committee type
+                        b6_committee_type = self.utility.canonFlag(b6_committee_id) # canonical flag
+                        b6_entity_date_of_thing_happening = row[24] #Date used to eval recency on dedupe
+                
+                        b6_committee_list = [
+                            b6_committee_id,
+                            b6_committee_name,
+                            b6_committee_address,
+                            b6_committee_city,
+                            b6_committee_state,
+                            b6_committee_zip,
+                            b6_committee_type,
+                            "",
+                            "",
+                            "",
+                            "",
+                            "",
+                            b6_entity_date_of_thing_happening,
+                        ]
+                
+                        #Womp into Expenditure
+                
+                        #douse this particular garb fire with a flood of IF statements
+                        if row[15] and row[15] != "":
+                            b6_transaction_date = row[15]
+                        elif row[24] and row[24] != "":
+                            b6_transaction_date = row[24]
+                        elif row[4] and row[4] != "":
+                            b6_transaction_date = row[4]
+                        elif row[22] and row[22] != "":
+                            b6_transaction_date = row[22]
+                        elif row[3] and row[3] != "":
+                            b6_transaction_date = row[3]
+                
+                        #date test
+                        b6_date_test = self.utility.validDate(b6_transaction_date)
+                        if b6_date_test == "broke":
+                            b6_dict = {}
+                            b6_dict["donor_id"] = row[6]
+                            b6_dict["recipient_id"] = row[2]
+                            b6_dict["lookup_name"] = ' '.join((row[0].strip().upper()).split()).replace('"',"")
+                            b6_dict["source_table"] = "b6expend"
+                            b6_dict["destination_table"] = "expenditure"
+                            b6_dict["donation_date"] = b6_transaction_date
+                            self.rows_with_new_bad_dates.append(b6_dict)
+                            #print(b6_dict)
+                        else:
+                            b6_year = b6_date_test.split("-")[0]
+                            if int(b6_year) >= 1999:
+                                b6_payee = ' '.join((row[27].strip().upper()).split()).replace('"',"")
+                                b6_payee_addr = ' '.join((row[28].strip().upper()).split()).replace('"',"")
+                                b6_purpose = ' '.join((row[26].strip().upper()).split()).replace('"',"")
+                                b6_amount = getFloat(row[25])
+                                b6_inkind = "0.0"
+                                b6_target_id = row[2]
+                                b6_stance = ""
+                                b6_exp_name = ' '.join((row[6].strip().upper()).split()).replace('"',"")
+                                b6_exp_addr = " ".join([row[8].strip().upper(), row[9].strip().upper(), row[10].strip().upper(), row[11].strip().upper()])
+                                b6_exp_addr = ' '.join(b6_exp_addr.split()).replace('"',"")
+                        
+                                """
+                                DB fields
+                                ========
+                                db_id (""), payee (name, free text), payee_addr, exp_date, exp_purpose, amount, in_kind, committee_id (doing the expending), stance (support/oppose), notes, payee_committee_id (the payee ID, if exists), committee_exp_name (name of the committee doing the expending), raw_target (free text ID of target ID, will get shunted to candidate or committee ID on save), target_candidate_id, target_committee_id
+
+                                """
+
+                                b6_exp_list = [      
+                                    "",                          
+                                    b6_payee,
+                                    b6_payee_addr,
+                                    b6_date_test,
+                                    b6_purpose,
+                                    b6_amount,
+                                    b6_inkind,
+                                    "", #committee doing the expending (doesn't exist, is the point)
+                                    "", #stance
+                                    b6_exp_addr, #notes
+                                    "", #payee ID
+                                    b6_exp_name, #name of person/entity doing the expending
+                                    b6_committee_id, #raw target -- expenditure is made on its behalf
+                                    "\n", #target candidate ID
+                                    "", #target committee ID                    
+                                ]
+                                b6_exp_list = "|".join(b6_exp_list) + "\n"
+                                expenditures.write(bytes(b6_exp_list, 'utf-8'))
+
+            os.remove(os.getcwd() + '\\tempForm6.txt')
+            return True
+        except:
+            traceback.print_exc()
+            return False
+
+    
+
 
     def parseFormB7(self, data):
         """
