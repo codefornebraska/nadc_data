@@ -3196,8 +3196,7 @@ def parseErrything():
         }
     )
     
-    deduped_entities = clean_entity.drop_duplicates(subset=["nadcid", "name", "address", "city", "state", "zip", "entity_type", "notes", "employer", "occupation", "place_of_business", "dissolved_date"])
-    
+    deduped_entities = clean_entity.drop_duplicates(subset=["nadcid", "name", "address", "city", "state", "zip", "entity_type", "notes", "employer", "occupation", "place_of_business", "dissolved_date"])    
     deduped_entities.to_csv(THISPATH + 'nadc_data/toupload/entities_deduped.txt', sep="|")
     
     print("   sorting ...")

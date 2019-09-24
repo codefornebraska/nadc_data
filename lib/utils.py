@@ -1,5 +1,6 @@
 import csvkit, os, traceback
 import pandas as pd
+from canonical.canonical import *
 
 class utils(object):
     """ Utility class to provide helper functions for parsing """
@@ -119,7 +120,7 @@ class utils(object):
 
 
 
-    def dedupeEntity(data, idList):
+    def dedupeEntity(self,data, idList):
 
         """
 
@@ -168,112 +169,118 @@ class utils(object):
             }
         )
     
-        deduped_entities = clean_entity.drop_duplicates(subset=["nadcid", "name", "address", "city", "state", "zip", "entity_type", "notes", "employer", "occupation", "place_of_business", "dissolved_date"])
-        deduped_entities.to_csv(THISPATH + 'nadc_data/toupload/entities_deduped.txt', sep="|")
+        deduped_entities = clean_entity.drop_duplicates(subset=["nadcid", "name", "address", "city", "state", "zip", "entity_type", "notes", "employer", "occupation", "place_of_business", "dissolved_date"])       
         print("   sorting ...")
+        #sort input file by date and grep?
+        deduped_entities = deduped_entities.sort_values(by=14,axis=1)
+        deduped_entities = deduped_entities.replace(to_replace ='1d', value = '', regex = True)
 
-        #sort input file by date
-        with hide('running', 'stdout', 'stderr'):
-            local('csvsort -d "|" -c 14 ' + THISPATH + 'nadc_data/toupload/entities_deduped.txt | csvformat -D "|" | sed -e \'1d\' > ' + THISPATH + 'nadc_data/toupload/entities_sorted_and_deduped.txt', capture=False)
-    
         #get most current, complete data
         print("   grepping pre-duped, sorted file and deduping for recency and completeness ...")
     
-        with open(THISPATH + "nadc_data/toupload/entity_almost_final_for_real.txt", "wb") as entity_almost_final:
-            for idx, i in enumerate(uniques):
-                #print str(idx)
-                with hide('running', 'stdout', 'stderr'):
-                    grepstring = local('grep "' + i + '" ' + THISPATH + 'nadc_data/toupload/entities_sorted_and_deduped.txt', capture=True)
-                    g = grepstring.split("\n") #list of records that match
-                    interimdict = {}
+        for idx, i in enumerate(uniques):
+            #print str(idx)           
+            resultsDF = deduped_entities[deduped_entities['nadcid'].str.match(i)]
+            interimdict = {}
                 
-                    #set default values
-                    interimdict['id'] = ""
-                    interimdict['canonical_id'] = ""
-                    interimdict['name'] = ""
-                    interimdict['canon_name'] = ""
-                    interimdict['address'] = ""
-                    interimdict['city'] = ""
-                    interimdict['state'] = ""
-                    interimdict['zip'] = ""
-                    interimdict['entity_type'] = ""
-                    interimdict['employer'] = ""
-                    interimdict['occupation'] = ""
-                    interimdict['place_of_business'] = ""
-                    interimdict['dissolved_date'] = ""
+            #set default values
+            interimdict['id'] = ""
+            interimdict['canonical_id'] = ""
+            interimdict['name'] = ""
+            interimdict['canon_name'] = ""
+            interimdict['address'] = ""
+            interimdict['city'] = ""
+            interimdict['state'] = ""
+            interimdict['zip'] = ""
+            interimdict['entity_type'] = ""
+            interimdict['employer'] = ""
+            interimdict['occupation'] = ""
+            interimdict['place_of_business'] = ""
+            interimdict['dissolved_date'] = ""
                 
-                    for dude in g:
-                        row = dude.split("|") #actual record
+            # Using itertuples instead of iterrows to preserve dtypes? -> https://stackoverflow.com/questions/16476924/how-to-iterate-over-rows-in-a-dataframe-in-pandas
+            for dataFrameRow in resultsDF.itertuples():
+                print(dataFrameRow)
                     
-                        nadcid = row[1]
-                        name = row[2]
-                        canonical_id = lookItUp(nadcid, "canonicalid", name)
-                        canonical_name = lookItUp(nadcid, "canonicalname", name)
+                nadcid = dataFrameRow[1]
+                name = dataFrameRow[4]
+                canonical_id = self.lookItUp(nadcid, "canonicalid", name)
+                canonical_name = self.lookItUp(nadcid, "canonicalname", name)
                     
-                        interimdict['id'] = nadcid
-                        interimdict['canonical_id'] = canonical_id
+                interimdict['id'] = nadcid
+                interimdict['canonical_id'] = canonical_id
                     
-                        #Unpack lookup to replace known bad strings
-                        for item in GARBAGE_STRINGS:
-                            name = name.upper().replace(*item).strip().rstrip(",").rstrip(" -")
-                            canonical_name = canonical_name.upper().replace(*item).strip().rstrip(",").rstrip(" -")
+                #Unpack lookup to replace known bad strings
+                for item in GARBAGE_STRINGS:
+                    name = name.upper().replace(*item).strip().rstrip(",").rstrip(" -")
+                    canonical_name = canonical_name.upper().replace(*item).strip().rstrip(",").rstrip(" -")
                     
-                        #check for complete names
-                        if len(name) > 1:
-                            interimdict['name'] = name
-                        if len(canonical_name) > 1:
-                            interimdict['canon_name'] = canonical_name
+                #check for complete names
+                if len(name) > 1:
+                    interimdict['name'] = name
+                if len(canonical_name) > 1:
+                    interimdict['canon_name'] = canonical_name
                     
-                        #check for complete address
-                        if len(row[3]) > 1 and len(row[4]) > 1 and len(row[5]) > 1 and len(row[6]) > 1:
-                            interimdict['address'] = row[3]
-                            interimdict['city'] = row[4]
-                            interimdict['state'] = row[5]
-                            interimdict['zip'] = row[6]
+                #check for complete address
+                if len(dataFrameRow[3]) > 1 and len(dataFrameRow[4]) > 1 and len(dataFrameRow[6]) > 1 and len(dataFrameRow[7]) > 1:
+                    interimdict['address'] = dataFrameRow[3]
+                    interimdict['city'] = dataFrameRow[6]
+                    interimdict['state'] = dataFrameRow[7]
+                    interimdict['zip'] = dataFrameRow[4]
 
-                        #check for complete entity type
-                        if len(row[7]) >= 1:
-                            interimdict['entity_type'] = row[7]
+                #check for complete entity type
+                if len(dataFrameRow[8]) >= 1:
+                    interimdict['entity_type'] = dataFrameRow[8]
 
-                        #check for complete employer
-                        if len(row[9]) > 1:
-                            interimdict['employer'] = row[9]
+                #check for complete employer
+                if len(dataFrameRow[10]) > 1:
+                    interimdict['employer'] = dataFrameRow[10]
                         
-                        #check for complete occupation
-                        if len(row[10]) > 1:
-                            interimdict['occupation'] = row[10]
+                #check for complete occupation
+                if len(dataFrameRow[11]) > 1:
+                    interimdict['occupation'] = dataFrameRow[11]
                         
-                        #check for complete place of business
-                        if len(row[11]) > 1:
-                            interimdict['place_of_business'] = row[11]
+                #check for complete place of business
+                if len(dataFrameRow[12]) > 1:
+                    interimdict['place_of_business'] = dataFrameRow[12]
                     
-                        #check for complete dissolved date
-                        if len(row[12]) > 1:
-                            interimdict['dissolved_date'] = row[12]
+                #check for complete dissolved date
+                if len(dataFrameRow[13]) > 1:
+                    interimdict['dissolved_date'] = dataFrameRow[13]
 
-                    #append dict items to list
-                    outlist = [
-                        interimdict['id'],
-                        interimdict['canonical_id'],
-                        interimdict['name'],
-                        interimdict['canon_name'],
-                        interimdict['address'],
-                        interimdict['city'],
-                        interimdict['state'],
-                        interimdict['zip'],
-                        interimdict['entity_type'],
-                        "",
-                        interimdict['employer'],
-                        interimdict['occupation'],
-                        interimdict['place_of_business'],
-                        interimdict['dissolved_date']
-                    ]
+            #append dict items to list
+            outlist = [
+                interimdict['id'],
+                interimdict['canonical_id'],
+                interimdict['name'],
+                interimdict['canon_name'],
+                interimdict['address'],
+                interimdict['city'],
+                interimdict['state'],
+                interimdict['zip'],
+                interimdict['entity_type'],
+                "",
+                interimdict['employer'],
+                interimdict['occupation'],
+                interimdict['place_of_business'],
+                interimdict['dissolved_date']
+            ]
+
+
+
+
+
+
+
                 
-                    entity_almost_final.write("|".join(outlist) + "\n")
+            ##################################################
+            # dump into seperate Dataframe instead of write file
+            #entity_almost_final.write("|".join(outlist) + "\n")
                 
         #handling stray bastards with no names
         print("   handling entities with no name ...")
     
+        # contunine on with new dataframe     
         with open(THISPATH + "nadc_data/toupload/entity_almost_final_for_real.txt", "rb") as readin, open(THISPATH + "nadc_data/toupload/entity.txt", "wb") as readout:
             reader = csvkit.reader(readin, delimiter=delim)
             for row in reader:
@@ -297,8 +304,16 @@ class utils(object):
                     notes = "Identifying information for several dozen committees and other entities, including this one, have been \"lost in digital space,\" according to the NADC."
             
                 outlist = [nadc_id, canonical_id, name, canonical_name, address, city, state, zip, entity_type, notes, employer, occupation, biz, dissolved_date, ""]
-            
+                # write to entity.txt is readout
                 readout.write("|".join(outlist) + "\n") 
+
+
+
+
+
+
+
+
                 
     def dedupeDonations(data, idList):
         """

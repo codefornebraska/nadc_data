@@ -68,6 +68,7 @@ if(newData):
                                                                                         if(expend is not None):
                                                                                             with open(os.getcwd + "\\temp\\expenditure.txt", "wb") as exp_out:
                                                                                                 exp_out.write(bytes(expend, 'utf-8'))
+                                                                                        dedupe = utility.dedupeEntity(os.getcwd() + '\\temp\\entity_raw.txt', parse.getIdMasterList())
     parse.destroy()
 
     if(parsedFormA1 and parsedFormA1Cand and parsedFormB1 and parsedFormB1AB and parsedFormB1C and parsedFormB1D and parsedFormB2 and parsedFormB2A and parsedFormB2B and parsedFormB4 and parsedFormB4A and parsedFormB4B1 and parsedFormB4B2 and parsedFormB4B3 and parsedFormB5 and parsedFormB6 and parsedFormB7 and parsedFormB72 and parsedFormB73 and parsedFormB9 and parsedFormMisc):
