@@ -9,6 +9,9 @@ Consider restructing to fill up the entity_raw.txt first, then run utils dedupeE
 Verifiy each form is being parsed correctly and each function is outputting correctly.
 Delete FabFile because we are not using fabric anymore, so we dont need that file anymore.
 Export pipe delimited data in the temp folder to a database.
+Update ReadMe
+Fetch last time script was run and implement constrainents on how often to update. (newData Variable Which needs
+to be added on the IF statement on line 28.
 '''
 
 config = None
@@ -16,13 +19,13 @@ with open('config.json', 'r') as configJSON:
             config = json.load(configJSON)
 
 
-newData = False
+newData = True
 data = data_layer.data_layer()
 utility = utils.utils()
 parse = parser.parser('FirstInstance')
 
 # check last updated to see if we need to run
-if(newData):
+if(False):
     newData = data.fetchData(config[0]['dataURL'])
 
 if(newData):
