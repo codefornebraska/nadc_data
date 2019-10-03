@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{30c08873-f2bd-409c-ad38-b5be1773385e}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>_test.py</StartupFile>
+    <StartupFile>main.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -41,7 +41,7 @@
     <Compile Include="lib\__init__.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="_test.py">
+    <Compile Include="main.py">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
